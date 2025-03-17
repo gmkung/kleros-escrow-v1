@@ -11,11 +11,48 @@ declare global {
 
 // Basic Multiple Arbitrable Transaction ABI with required functions
 const multipleArbitrableTransactionABI = [
-  "function createTransaction(uint256 _metaEvidenceID, address _receiver, string calldata _metaEvidence) external payable returns (uint256 transactionID)",
-  "function getTransactionIDsByAddress(address _address) external view returns (uint256[] memory)",
-  "function getCountTransactions() external view returns (uint256)",
-  "function transactions(uint256 _transactionID) external view returns (address payable sender, address payable receiver, uint256 amount, uint256 timeoutPayment, uint256 disputeId, uint256 senderFee, uint256 receiverFee, uint256 lastInteraction, Status status)",
-  "enum Status { NoDispute, WaitingSender, WaitingReceiver, DisputeCreated, Resolved }"
+  {
+    "name": "createTransaction",
+    "type": "function",
+    "inputs": [
+      { "name": "_metaEvidenceID", "type": "uint256" },
+      { "name": "_receiver", "type": "address" },
+      { "name": "_metaEvidence", "type": "string" }
+    ],
+    "outputs": [{ "name": "transactionID", "type": "uint256" }],
+    "stateMutability": "payable"
+  },
+  {
+    "name": "getTransactionIDsByAddress",
+    "type": "function",
+    "inputs": [{ "name": "_address", "type": "address" }],
+    "outputs": [{ "name": "", "type": "uint256[]" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "getCountTransactions",
+    "type": "function",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "transactions",
+    "type": "function",
+    "inputs": [{ "name": "_transactionID", "type": "uint256" }],
+    "outputs": [
+      { "name": "sender", "type": "address" },
+      { "name": "receiver", "type": "address" },
+      { "name": "amount", "type": "uint256" },
+      { "name": "timeoutPayment", "type": "uint256" },
+      { "name": "disputeId", "type": "uint256" },
+      { "name": "senderFee", "type": "uint256" },
+      { "name": "receiverFee", "type": "uint256" },
+      { "name": "lastInteraction", "type": "uint256" },
+      { "name": "status", "type": "uint8" }
+    ],
+    "stateMutability": "view"
+  }
 ];
 
 const klerosConfig = {
@@ -25,7 +62,7 @@ const klerosConfig = {
   },
   multipleArbitrableTransaction: {
     address: "0x0d67440946949FE293B45c52eFD8A9b3d51e2522",
-    abi: multipleArbitrableTransactionABI, // Add the ABI
+    abi: multipleArbitrableTransactionABI, // Properly formatted ABI
   },
   ipfsGateway: "https://cdn.kleros.link",
 };

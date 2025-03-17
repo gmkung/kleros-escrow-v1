@@ -10,7 +10,7 @@ interface SearchBarProps {
 // Define a type for the debounced function that includes cancel method
 interface DebouncedFunction<T extends (...args: any[]) => any> {
   (...args: Parameters<T>): ReturnType<T>;
-  cancel?: () => void;
+  cancel: () => void;
 }
 
 const SearchBar = ({ onSearch, className = '' }: SearchBarProps) => {
@@ -30,7 +30,7 @@ const SearchBar = ({ onSearch, className = '' }: SearchBarProps) => {
     
     // Cleanup
     return () => {
-      debouncedSearch.cancel?.();
+      debouncedSearch.cancel();
     };
   }, [searchTerm, debouncedSearch]);
   

@@ -18,18 +18,23 @@ const TransactionList = () => {
   const loadTransactions = useCallback(async () => {
     try {
       setLoading(true);
+      console.log("Fetching transactions...");
       
       // Fetch all transactions from the Kleros subgraph
       const allTx = await klerosClient.services.event.getAllMetaEvidence();
+      console.log("Received transactions:", allTx);
       
       // Process the transactions with their metadata from IPFS
       const processedTx = await Promise.all(
         allTx.map(async (tx) => {
           try {
+            console.log("Processing transaction:", tx._metaEvidenceID);
             const metaData = await safeLoadIPFS(tx._evidence);
+            console.log("Metadata loaded:", metaData);
             
             // Get transaction details to determine status
             const details = await klerosClient.services.event.getTransactionDetails(tx._metaEvidenceID);
+            console.log("Transaction details:", details);
             
             let status: 'pending' | 'completed' | 'disputed' | 'unknown' = 'pending';
             
@@ -63,6 +68,7 @@ const TransactionList = () => {
       
       // Filter out any null values from failed processing
       const validTransactions = processedTx.filter(tx => tx !== null) as ProcessedTransaction[];
+      console.log("Valid transactions:", validTransactions);
       
       // Sort by date (newest first)
       const sortedTransactions = sortByDate(validTransactions);
@@ -70,7 +76,7 @@ const TransactionList = () => {
       setTransactions(sortedTransactions);
       setFilteredTransactions(sortedTransactions);
       setError(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load transactions:', err);
       setError('Failed to load transactions. Please try again later.');
       toast({
