@@ -86,7 +86,8 @@ export const uploadEvidenceToIPFS = async (
     if (file) {
       const fileData = await fileToBase64(file);
       const cid = await klerosClient.services.ipfs.uploadToIPFS(fileData, file.name);
-      fileURI = `/ipfs/${cid}`;
+      // Use the CID directly without adding /ipfs/ prefix as it's already included in the returned CID
+      fileURI = cid;
       fileTypeExtension = file.name.split('.').pop() || '';
     }
     
