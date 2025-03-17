@@ -7,13 +7,19 @@ interface SearchBarProps {
   className?: string;
 }
 
+// Define a type for the debounced function that includes cancel method
+interface DebouncedFunction<T extends (...args: any[]) => any> {
+  (...args: Parameters<T>): ReturnType<T>;
+  cancel?: () => void;
+}
+
 const SearchBar = ({ onSearch, className = '' }: SearchBarProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // Create a debounced search function
-  const debouncedSearch = useRef(
+  // Create a debounced search function with the appropriate type
+  const debouncedSearch = useRef<DebouncedFunction<typeof onSearch>>(
     debounce((term: string) => {
       onSearch(term);
     }, 300)

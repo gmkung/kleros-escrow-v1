@@ -2,6 +2,22 @@
 import { createKlerosEscrowClient } from "kleros-escrow-data-service";
 import { ethers } from "ethers";
 
+// This is needed to add ethereum property to the Window interface
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
+
+// Basic Multiple Arbitrable Transaction ABI with required functions
+const multipleArbitrableTransactionABI = [
+  "function createTransaction(uint256 _metaEvidenceID, address _receiver, string calldata _metaEvidence) external payable returns (uint256 transactionID)",
+  "function getTransactionIDsByAddress(address _address) external view returns (uint256[] memory)",
+  "function getCountTransactions() external view returns (uint256)",
+  "function transactions(uint256 _transactionID) external view returns (address payable sender, address payable receiver, uint256 amount, uint256 timeoutPayment, uint256 disputeId, uint256 senderFee, uint256 receiverFee, uint256 lastInteraction, Status status)",
+  "enum Status { NoDispute, WaitingSender, WaitingReceiver, DisputeCreated, Resolved }"
+];
+
 const klerosConfig = {
   provider: {
     url: "https://ethereum.publicnode.com",
@@ -9,6 +25,7 @@ const klerosConfig = {
   },
   multipleArbitrableTransaction: {
     address: "0x0d67440946949FE293B45c52eFD8A9b3d51e2522",
+    abi: multipleArbitrableTransactionABI, // Add the ABI
   },
   ipfsGateway: "https://cdn.kleros.link",
 };

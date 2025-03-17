@@ -1,72 +1,64 @@
 
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
 import { ProcessedTransaction } from "./kleros";
-
+ 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs))
 }
 
-// Format a date to a human-readable string
-export function formatDate(date: Date): string {
-  const now = new Date();
-  const diffTime = Math.abs(now.getTime() - date.getTime());
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  
-  if (diffDays === 0) {
-    return "Today";
-  } else if (diffDays === 1) {
-    return "Yesterday";
-  } else if (diffDays < 7) {
-    return `${diffDays} days ago`;
-  } else {
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  }
-}
-
-// Format a timestamp string to a date object
-export function formatTimestamp(timestamp: string): Date {
-  return new Date(parseInt(timestamp) * 1000);
-}
-
-// Sort and filter functions for transactions
-export const sortByDate = (transactions: ProcessedTransaction[]): ProcessedTransaction[] => 
-  [...transactions].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-
-export const filterByCategory = (transactions: ProcessedTransaction[], category: string): ProcessedTransaction[] => 
-  transactions.filter(tx => tx.category === category);
-
-export const searchTransactions = (transactions: ProcessedTransaction[], term: string): ProcessedTransaction[] => 
-  transactions.filter(tx => 
-    tx.title.toLowerCase().includes(term.toLowerCase()) || 
-    tx.description.toLowerCase().includes(term.toLowerCase()) ||
-    tx.id.includes(term)
-  );
-
-// Debounce function for search
-export function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
+// Debounce function that includes a cancel method in its return type
+export function debounce<T extends (...args: any[]) => any>(
+  func: T, 
+  wait: number
+): { 
+  (...args: Parameters<T>): ReturnType<T>;
+  cancel: () => void;
+} {
   let timeout: ReturnType<typeof setTimeout> | null = null;
-
-  return (...args: Parameters<F>): Promise<ReturnType<F>> => {
+  
+  // Create the debounced function
+  const debounced = function(...args: Parameters<T>) {
+    const later = () => {
+      timeout = null;
+      return func(...args);
+    };
+    
     if (timeout !== null) {
       clearTimeout(timeout);
     }
-
-    return new Promise(resolve => {
-      timeout = setTimeout(() => resolve(func(...args)), waitFor);
-    });
+    
+    timeout = setTimeout(later, wait);
+    return undefined as unknown as ReturnType<T>;
   };
+  
+  // Add the cancel method
+  debounced.cancel = function() {
+    if (timeout !== null) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+  };
+  
+  return debounced;
 }
 
-// Create a load more function that simulates infinite scrolling
-export const simulateInfiniteScroll = <T>(
-  items: T[],
-  currentCount: number,
-  increment: number = 10
-): T[] => {
-  return items.slice(0, Math.min(currentCount + increment, items.length));
+// Search function for transactions
+export const searchTransactions = (transactions: ProcessedTransaction[], searchTerm: string): ProcessedTransaction[] => {
+  const term = searchTerm.toLowerCase().trim();
+  return transactions.filter(tx => 
+    tx.title.toLowerCase().includes(term) || 
+    tx.description.toLowerCase().includes(term) ||
+    tx.id.toLowerCase().includes(term)
+  );
+};
+
+// Sort transactions by date
+export const sortByDate = (transactions: ProcessedTransaction[]): ProcessedTransaction[] => {
+  return [...transactions].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+};
+
+// Filter transactions by category
+export const filterByCategory = (transactions: ProcessedTransaction[], category: string): ProcessedTransaction[] => {
+  return transactions.filter(tx => tx.category === category);
 };
