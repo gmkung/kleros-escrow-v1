@@ -84,7 +84,6 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
         amount: data.amount,
         question: "Should the payment be released to the receiver?",
         rulingOptions: {
-          type: "single-select",
           titles: ["Release to sender", "Release to receiver"],
           descriptions: [
             "Funds will be returned to the sender",
