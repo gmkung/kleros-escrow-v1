@@ -5,6 +5,7 @@ import { ProcessedTransaction, klerosClient, safeLoadIPFS } from '../lib/kleros'
 import { searchTransactions, sortByDate, filterByCategory } from '../lib/utils';
 import TransactionCard from './TransactionCard';
 import SearchBar from './SearchBar';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const TransactionList = () => {
   const { toast } = useToast();
@@ -129,10 +130,17 @@ const TransactionList = () => {
       {loading && filteredTransactions.length === 0 ? (
         <div className="space-y-4">
           {Array.from({ length: 6 }).map((_, index) => (
-            <div 
-              key={index} 
-              className="bg-white rounded-2xl border border-neutral-200 overflow-hidden h-60 animate-pulse"
-            ></div>
+            <div key={index} className="card-tron p-5 rounded-xl">
+              <Skeleton className="h-16 w-full mb-3" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+                <div className="flex justify-between items-center mt-4">
+                  <Skeleton className="h-6 w-24" />
+                  <Skeleton className="h-6 w-20" />
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       ) : error ? (
@@ -166,7 +174,7 @@ const TransactionList = () => {
           
           {visibleCount < filteredTransactions.length && (
             <div className="text-center py-8">
-              <div className="w-8 h-8 rounded-full bg-neutral-200 animate-pulse mx-auto"></div>
+              <Skeleton className="w-8 h-8 rounded-full mx-auto" />
             </div>
           )}
         </div>
