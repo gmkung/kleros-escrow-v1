@@ -50,43 +50,43 @@ const TransactionCard = ({
     >
       <div 
         ref={cardRef}
-        className="bg-white rounded-2xl border border-neutral-200 overflow-hidden card-hover opacity-0 transition-all duration-300 stagger-item"
+        className="card-tron rounded-2xl overflow-hidden card-hover opacity-0 transition-all duration-300 stagger-item"
       >
         <div className="p-5">
           <div className="flex justify-between items-start mb-3">
             <StatusBadge status={transaction.status || 'unknown'} />
-            <span className="text-xs text-neutral-500">
+            <span className="text-xs text-violet-200/70">
               {formatDate(transaction.timestamp)}
             </span>
           </div>
           
-          <h3 className="text-lg font-semibold mb-2 text-neutral-900 line-clamp-1">
+          <h3 className="text-lg font-semibold mb-2 text-violet-100 line-clamp-1 tron-glow-text">
             {transaction.title || 'Untitled Transaction'}
           </h3>
           
-          <p className="text-sm text-neutral-600 mb-4 line-clamp-2">
+          <p className="text-sm text-violet-200/80 mb-4 line-clamp-2">
             {transaction.description || 'No description available'}
           </p>
           
-          <div className="flex justify-between items-center text-xs text-neutral-500">
+          <div className="flex justify-between items-center text-xs text-violet-300/70">
             <div className="flex flex-col">
               <span className="mb-1">Amount</span>
-              <span className="font-medium text-neutral-800">{formatAmount(transaction.amount)}</span>
+              <span className="font-medium text-violet-100">{formatAmount(transaction.amount)}</span>
             </div>
             
-            <div className="h-8 w-px bg-neutral-200"></div>
+            <div className="h-8 w-px bg-violet-500/20"></div>
             
             <div className="flex flex-col items-end">
               <span className="mb-1">Transaction ID</span>
-              <span className="font-medium text-neutral-800">{transaction.id}</span>
+              <span className="font-medium text-violet-100">{transaction.id}</span>
             </div>
           </div>
         </div>
         
-        <div className="bg-neutral-50 border-t border-neutral-200 py-3 px-5 flex justify-between items-center">
+        <div className="bg-violet-900/20 border-t border-violet-500/20 py-3 px-5 flex justify-between items-center">
           <div className="flex flex-col">
-            <span className="text-xs text-neutral-500 mb-1">Sender</span>
-            <span className="text-xs font-medium text-neutral-800">{formatAddress(transaction.sender)}</span>
+            <span className="text-xs text-violet-300/70 mb-1">Sender</span>
+            <span className="text-xs font-medium text-violet-100">{formatAddress(transaction.sender)}</span>
           </div>
           
           <svg 
@@ -95,7 +95,7 @@ const TransactionCard = ({
             viewBox="0 0 24 24" 
             fill="none" 
             xmlns="http://www.w3.org/2000/svg"
-            className="text-neutral-400"
+            className="text-violet-400"
           >
             <path 
               d="M5 12H19M19 12L12 5M19 12L12 19" 
@@ -107,8 +107,8 @@ const TransactionCard = ({
           </svg>
           
           <div className="flex flex-col items-end">
-            <span className="text-xs text-neutral-500 mb-1">Receiver</span>
-            <span className="text-xs font-medium text-neutral-800">{formatAddress(transaction.receiver)}</span>
+            <span className="text-xs text-violet-300/70 mb-1">Receiver</span>
+            <span className="text-xs font-medium text-violet-100">{formatAddress(transaction.receiver)}</span>
           </div>
         </div>
       </div>

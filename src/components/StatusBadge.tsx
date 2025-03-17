@@ -75,7 +75,7 @@ const statusConfig = {
   },
   unknown: {
     label: 'Unknown',
-    className: 'bg-neutral-100 text-neutral-600 border border-neutral-200',
+    className: 'bg-slate-800/60 text-slate-300 border border-slate-600/50',
     icon: (
       <svg 
         width="12" 
