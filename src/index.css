@@ -7,44 +7,44 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 215 25% 27%;
+    --background: 260 15% 96%;
+    --foreground: 260 25% 27%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 27%;
+    --card-foreground: 260 25% 27%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 27%;
+    --popover-foreground: 260 25% 27%;
 
-    --primary: 212 100% 47%;
+    --primary: 260 100% 47%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 215 25% 27%;
+    --secondary: 260 20% 96%;
+    --secondary-foreground: 260 25% 27%;
 
-    --muted: 210 20% 92%;
-    --muted-foreground: 215 25% 40%;
+    --muted: 260 20% 92%;
+    --muted-foreground: 260 25% 40%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 270 40% 96.1%;
+    --accent-foreground: 260 25% 27%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 260 31.8% 91.4%;
+    --input: 260 31.8% 91.4%;
+    --ring: 260 84% 4.9%;
 
     --radius: 1rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 260 15% 98%;
+    --sidebar-foreground: 260 5.3% 26.1%;
+    --sidebar-primary: 260 5.9% 10%;
+    --sidebar-primary-foreground: 260 15% 98%;
+    --sidebar-accent: 260 4.8% 95.9%;
+    --sidebar-accent-foreground: 260 5.9% 10%;
+    --sidebar-border: 260 13% 91%;
+    --sidebar-ring: 260 91.2% 59.8%;
   }
 
   * {
@@ -56,6 +56,7 @@
     @apply bg-background text-foreground antialiased overflow-x-hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    background-image: linear-gradient(to bottom right, rgba(143, 107, 193, 0.05), rgba(117, 86, 161, 0.15));
   }
 }
 
@@ -65,7 +66,7 @@
   }
   
   .glass {
-    @apply bg-white/80 backdrop-blur-sm border border-white/50 shadow-subtle;
+    @apply bg-white/75 backdrop-blur-sm border border-white/70 shadow-subtle;
   }
   
   .text-balance {
@@ -108,6 +109,16 @@
   .status-badge-disputed {
     @apply bg-red-50 text-red-700 border border-red-100;
   }
+
+  /* Metallic Card Styling */
+  .card-metallic {
+    @apply bg-gradient-to-br from-white/90 to-purple-100/80 shadow-lg border border-purple-100/90 backdrop-blur-sm;
+  }
+
+  /* Industrial Button Style */
+  .btn-industrial {
+    @apply bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium shadow-md;
+  }
 }
 
 /* Animations */
@@ -129,3 +140,23 @@
 .stagger-item:nth-child(8) { animation-delay: 0.45s; }
 .stagger-item:nth-child(9) { animation-delay: 0.5s; }
 .stagger-item:nth-child(10) { animation-delay: 0.55s; }
+
+/* Metallic Gradients */
+.bg-metallic-purple {
+  background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+}
+
+.bg-metallic-silver {
+  background: linear-gradient(135deg, #f5f5f5, #e5e5e5);
+}
+
+.bg-metallic-dark {
+  background: linear-gradient(135deg, #4b5563, #374151);
+}
+
+/* Industrial Kitchen-Inspired Elements */
+.industrial-surface {
+  background: linear-gradient(135deg, rgba(249, 250, 251, 0.9), rgba(243, 244, 246, 0.8));
+  border: 1px solid rgba(209, 213, 219, 0.5);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
