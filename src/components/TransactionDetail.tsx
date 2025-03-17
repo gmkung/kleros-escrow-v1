@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +22,6 @@ const TransactionDetail = () => {
       try {
         setLoading(true);
         
-        // Get transaction metadata
         const allTx = await klerosClient.services.event.getAllMetaEvidence();
         const transactionMetaEvidence = allTx.find(tx => tx._metaEvidenceID === id);
         
@@ -33,7 +31,6 @@ const TransactionDetail = () => {
         
         const metaData = await safeLoadIPFS(transactionMetaEvidence._evidence);
         
-        // Get transaction events
         const events = await klerosClient.services.event.getTransactionDetails(id);
         
         setTransaction({
@@ -88,7 +85,7 @@ const TransactionDetail = () => {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12 text-center">
         <h2 className="text-2xl font-bold text-neutral-800 mb-4">Transaction Not Found</h2>
-        <p className="text-neutral-600 mb-6">{error || 'The transaction you're looking for doesn't exist or has been removed.'}</p>
+        <p className="text-neutral-600 mb-6">{error || "The transaction you're looking for doesn't exist or has been removed."}</p>
         <button
           onClick={() => navigate('/')}
           className="px-6 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
@@ -186,7 +183,6 @@ const TransactionDetail = () => {
           <h2 className="text-xl font-bold text-neutral-900 mb-6">Transaction Timeline</h2>
           
           <div className="pl-2">
-            {/* Transaction Created */}
             <TimelineEvent 
               title="Transaction Created"
               description={`Escrow transaction created between ${formatAddress(transaction.sender)} and ${formatAddress(transaction.receiver)}`}
@@ -211,7 +207,6 @@ const TransactionDetail = () => {
               }
             />
             
-            {/* Payment Events */}
             {transactionEvents?.payments?.map((payment: any, index: number) => (
               <TimelineEvent 
                 key={`payment-${index}`}
@@ -239,7 +234,6 @@ const TransactionDetail = () => {
               />
             ))}
             
-            {/* Evidence Events */}
             {transactionEvents?.evidences?.map((evidence: any, index: number) => (
               <TimelineEvent 
                 key={`evidence-${index}`}
@@ -267,7 +261,6 @@ const TransactionDetail = () => {
               />
             ))}
             
-            {/* Dispute Events */}
             {transactionEvents?.disputes?.map((dispute: any, index: number) => (
               <TimelineEvent 
                 key={`dispute-${index}`}
@@ -296,7 +289,6 @@ const TransactionDetail = () => {
               />
             ))}
             
-            {/* Fee Payment Events */}
             {transactionEvents?.hasToPayFees?.map((fee: any, index: number) => (
               <TimelineEvent 
                 key={`fee-${index}`}
@@ -345,7 +337,6 @@ const TransactionDetail = () => {
               />
             ))}
             
-            {/* Ruling Events */}
             {transactionEvents?.rulings?.map((ruling: any, index: number) => (
               <TimelineEvent 
                 key={`ruling-${index}`}
@@ -381,7 +372,6 @@ const TransactionDetail = () => {
               />
             ))}
             
-            {/* Show the last payment if it happened after ruling */}
             {transactionEvents?.payments?.length > 0 && 
               new Date(parseInt(transactionEvents.payments.slice(-1)[0].blockTimestamp) * 1000) > 
               (transactionEvents?.rulings?.length > 0 
