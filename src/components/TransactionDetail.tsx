@@ -68,6 +68,31 @@ const TransactionDetail = () => {
     loadTransactionDetails();
   }, [id, toast]);
   
+  const formatDescription = (text: string) => {
+    if (!text) return null;
+    
+    const paragraphs = text.split('\n\n');
+    
+    return paragraphs.map((paragraph, index) => {
+      const lines = paragraph.split('\n');
+      
+      if (lines.length === 1) {
+        return <p key={`p-${index}`} className="mb-4">{paragraph}</p>;
+      }
+      
+      return (
+        <p key={`p-${index}`} className="mb-4">
+          {lines.map((line, lineIndex) => (
+            <span key={`line-${index}-${lineIndex}`}>
+              {line}
+              {lineIndex < lines.length - 1 && <br />}
+            </span>
+          ))}
+        </p>
+      );
+    });
+  };
+  
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -134,9 +159,9 @@ const TransactionDetail = () => {
             {transaction.title}
           </h1>
           
-          <p className="text-neutral-600 mb-6">
-            {transaction.description}
-          </p>
+          <div className="text-neutral-600 mb-6 prose prose-sm max-w-none">
+            {formatDescription(transaction.description)}
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-neutral-50 rounded-xl p-4">
