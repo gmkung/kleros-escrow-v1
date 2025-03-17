@@ -49,10 +49,5 @@ export const klerosConfig = {
   provider: {
     url: "https://ethereum.publicnode.com",
     networkId: 1, // Ethereum mainnet
-  },
-  multipleArbitrableTransaction: {
-    address: "0x0d67440946949FE293B45c52eFD8A9b3d51e2522",
-    abi: multipleArbitrableTransactionABI, // Properly formatted ABI
-  },
-  ipfsGateway: "https://cdn.kleros.link",
+  }
 };

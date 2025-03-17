@@ -1,4 +1,3 @@
-
 import { createKlerosEscrowClient } from "kleros-escrow-data-service";
 import { ethers } from "ethers";
 import { klerosConfig } from './contracts';
