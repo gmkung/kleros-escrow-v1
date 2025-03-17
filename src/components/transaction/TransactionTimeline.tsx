@@ -15,11 +15,9 @@ const TransactionTimeline: React.FC<TransactionTimelineProps> = ({
   const timelineEvents = processTimelineEvents(transactionEvents, transaction);
   
   return (
-    <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-card">
-      <div className="p-6">
-        <h2 className="text-xl font-bold text-neutral-900 mb-6">Transaction Timeline</h2>
-        <TimelineEventsList events={timelineEvents} />
-      </div>
+    <div>
+      <h2 className="text-xl font-bold text-violet-100 mb-6 tron-glow-text">Transaction Timeline</h2>
+      <TimelineEventsList events={timelineEvents} />
     </div>
   );
 };

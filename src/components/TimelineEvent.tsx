@@ -50,24 +50,24 @@ const TimelineEvent = ({
   return (
     <div className="flex gap-4 animate-fadeIn animate-once animate-delayed">
       <div className="flex flex-col items-center">
-        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-600">
+        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-violet-900/30 text-violet-300 border border-violet-500/20">
           {icon || defaultIcon}
         </div>
-        {!isLast && <div className="w-0.5 bg-neutral-200 h-full mt-2"></div>}
+        {!isLast && <div className="w-0.5 bg-violet-500/20 h-full mt-2"></div>}
       </div>
       
       <div className={`pb-8 ${isLast ? '' : ''}`}>
         <div className="flex flex-col">
-          <h4 className="text-base font-medium text-neutral-900">{title}</h4>
+          <h4 className="text-base font-medium text-violet-100">{title}</h4>
           
-          <div className="flex items-center text-xs text-neutral-500 mt-1 mb-2">
+          <div className="flex items-center text-xs text-violet-300/70 mt-1 mb-2">
             <span>{formattedDate}</span>
             <span className="mx-1.5">•</span>
             <span>{formattedTime}</span>
           </div>
           
           {description && (
-            <p className="text-sm text-neutral-600 mt-1 mb-2">{description}</p>
+            <p className="text-sm text-violet-200/80 mt-1 mb-2">{description}</p>
           )}
           
           {transactionHash && (
@@ -75,7 +75,7 @@ const TimelineEvent = ({
               href={`https://etherscan.io/tx/${transactionHash}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center text-xs text-blue-600 hover:text-blue-700 transition-colors mt-1"
+              className="inline-flex items-center text-xs text-violet-400 hover:text-violet-300 transition-colors mt-1"
             >
               <span>View on Etherscan</span>
               <svg 

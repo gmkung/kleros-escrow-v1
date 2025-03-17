@@ -10,7 +10,7 @@ interface TimelineEventsListProps {
 
 const TimelineEventsList: React.FC<TimelineEventsListProps> = ({ events }) => {
   if (!events || events.length === 0) {
-    return <div className="text-neutral-500 p-4">No timeline events available.</div>;
+    return <div className="text-violet-300/70 p-4">No timeline events available.</div>;
   }
 
   return (
