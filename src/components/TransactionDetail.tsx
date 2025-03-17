@@ -89,16 +89,20 @@ const TransactionDetail = () => {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <TransactionDetailHeader />
       
-      <TransactionSummary transaction={transaction} />
+      <div className="card-tron rounded-2xl overflow-hidden mb-8 shadow-lg animate-fadeIn">
+        <div className="p-6">
+          <TransactionSummary transaction={transaction} />
+          
+          {/* Add the Transaction Actions component */}
+          <TransactionActions 
+            transaction={transaction} 
+            transactionEvents={transactionEvents} 
+            onAction={loadTransactionDetails}
+          />
+        </div>
+      </div>
       
-      {/* Add the Transaction Actions component */}
-      <TransactionActions 
-        transaction={transaction} 
-        transactionEvents={transactionEvents} 
-        onAction={loadTransactionDetails}
-      />
-      
-      <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden mb-8 shadow-card">
+      <div className="card-tron rounded-2xl overflow-hidden mb-8 shadow-lg">
         <div className="p-6">
           {transaction.question && (
             <ArbitrationDetails 
@@ -111,10 +115,14 @@ const TransactionDetail = () => {
         </div>
       </div>
       
-      <TransactionTimeline 
-        transactionEvents={transactionEvents} 
-        transaction={transaction}
-      />
+      <div className="card-tron rounded-2xl overflow-hidden shadow-lg">
+        <div className="p-6">
+          <TransactionTimeline 
+            transactionEvents={transactionEvents} 
+            transaction={transaction}
+          />
+        </div>
+      </div>
     </div>
   );
 };
