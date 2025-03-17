@@ -91,3 +91,15 @@ export interface ProcessedTransaction {
   blockNumber: string;
   status?: 'pending' | 'completed' | 'disputed' | 'unknown';
 }
+
+export interface CreateTransactionParams {
+  receiver: string;
+  value: string;
+  timeoutPayment: number;
+  metaEvidence: string;
+}
+
+export interface EvidenceSubmissionParams {
+  transactionId: string;
+  evidence: string;
+}
