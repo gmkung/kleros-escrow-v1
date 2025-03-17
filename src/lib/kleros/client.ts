@@ -41,14 +41,14 @@ export const safeLoadIPFS = async (uri: string) => {
   }
 };
 
-// Function to convert a file to base64
-export const fileToBase64 = (file: File): Promise<string> => {
+// Function to convert a file to Uint8Array (binary data)
+export const fileToBase64 = (file: File): Promise<Uint8Array> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsArrayBuffer(file);
     reader.onload = () => {
       const buffer = new Uint8Array(reader.result as ArrayBuffer);
-      resolve(buffer as unknown as string);
+      resolve(buffer);
     };
     reader.onerror = (error) => {
       reject(error);
@@ -75,8 +75,9 @@ export const uploadEvidenceToIPFS = async (
     }
     
     // Create and upload the evidence JSON
+    // Note: The Kleros API expects 'name' rather than 'title'
     const evidenceData = {
-      title,
+      name: title, // Using title as name to match API expectations
       description,
       ...(fileURI && { fileURI }),
       ...(fileTypeExtension && { fileTypeExtension })
