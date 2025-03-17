@@ -123,6 +123,8 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
         data.file
       );
       
+      console.log("Evidence URI received from uploadEvidenceToIPFS:", evidenceURI);
+      
       // Submit evidence to blockchain
       const signerClient = await createSignerClient();
       const tx = await signerClient.actions.evidence.submitEvidence({

@@ -86,7 +86,7 @@ export const uploadEvidenceToIPFS = async (
     if (file) {
       const fileData = await fileToBase64(file);
       const cid = await klerosClient.services.ipfs.uploadToIPFS(fileData, file.name);
-      // Use the CID directly without adding /ipfs/ prefix as it's already included in the returned CID
+      // Use the CID directly as it already includes the correct prefix
       fileURI = cid;
       fileTypeExtension = file.name.split('.').pop() || '';
     }
@@ -100,7 +100,11 @@ export const uploadEvidenceToIPFS = async (
       ...(fileTypeExtension && { fileTypeExtension })
     };
     
-    return await klerosClient.services.ipfs.uploadEvidence(evidenceData);
+    // The uploadEvidence function may also be returning paths with /ipfs/ prefix
+    // So we need to ensure we don't use it as-is without checking
+    const evidenceUri = await klerosClient.services.ipfs.uploadEvidence(evidenceData);
+    console.log("Evidence URI before return:", evidenceUri);
+    return evidenceUri;
   } catch (error) {
     console.error("Error uploading evidence to IPFS:", error);
     throw new Error("Failed to upload evidence to IPFS");
