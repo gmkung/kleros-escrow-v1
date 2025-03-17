@@ -2,8 +2,9 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { createSignerClient, klerosClient } from '../../lib/kleros';
+import { createSignerClient, klerosClient, uploadEvidenceToIPFS } from '../../lib/kleros';
 import { useToast } from "@/hooks/use-toast";
+import EvidenceDialog, { EvidenceFormData } from './EvidenceDialog';
 
 interface TransactionActionsProps {
   transaction: any;
@@ -14,6 +15,7 @@ interface TransactionActionsProps {
 const TransactionActions = ({ transaction, transactionEvents, onAction }: TransactionActionsProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  const [evidenceDialogOpen, setEvidenceDialogOpen] = useState(false);
 
   // Helper function to check if wallet is connected and transaction is active
   const checkCanAct = () => {
@@ -108,15 +110,51 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
   };
 
   // Submit evidence
-  const handleSubmitEvidence = async () => {
+  const handleSubmitEvidence = async (data: EvidenceFormData) => {
     if (!checkCanAct()) return;
     
-    // This would typically open a modal for uploading evidence
-    // For simplicity, we'll just show a toast
-    toast({
-      title: "Evidence Submission",
-      description: "Evidence submission will be implemented in a future update",
-    });
+    try {
+      setIsLoading('evidence');
+      
+      // Upload evidence to IPFS
+      const evidenceURI = await uploadEvidenceToIPFS(
+        data.title,
+        data.description,
+        data.file
+      );
+      
+      // Submit evidence to blockchain
+      const signerClient = await createSignerClient();
+      const tx = await signerClient.actions.evidence.submitEvidence({
+        transactionId: transaction.id,
+        evidence: evidenceURI,
+      });
+      
+      toast({
+        title: "Evidence Submission",
+        description: "Your evidence submission has been submitted to the blockchain",
+      });
+      
+      await tx.wait();
+      
+      toast({
+        title: "Evidence Submitted",
+        description: "Your evidence has been successfully recorded on the blockchain",
+        variant: "default",
+      });
+      
+      setEvidenceDialogOpen(false);
+      onAction();
+    } catch (error: any) {
+      console.error("Error submitting evidence:", error);
+      toast({
+        title: "Evidence Submission Failed",
+        description: error.message || "Failed to submit evidence",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(null);
+    }
   };
 
   // Pay arbitration fee as sender
@@ -213,68 +251,77 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
   const hasDispute = transactionEvents?.disputes?.length > 0;
 
   return (
-    <Card className="mb-8">
-      <CardHeader>
-        <CardTitle>Transaction Actions</CardTitle>
-        <CardDescription>Available actions for this transaction</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {canReleaseFunds && !hasDispute && (
-            <>
-              <Button 
-                onClick={handleReleaseFunds} 
-                disabled={isLoading !== null}
-                className="w-full"
-              >
-                {isLoading === 'release' ? 'Processing...' : 'Release Funds to Receiver'}
-              </Button>
-              
-              <Button 
-                onClick={handleReimburse} 
-                disabled={isLoading !== null}
-                variant="outline" 
-                className="w-full"
-              >
-                {isLoading === 'reimburse' ? 'Processing...' : 'Reimburse Funds to Sender'}
-              </Button>
-            </>
-          )}
-          
-          {canStartDispute && !hasDispute && (
-            <>
-              <Button 
-                onClick={handlePayArbitrationFeeSender} 
-                disabled={isLoading !== null}
-                variant="secondary" 
-                className="w-full"
-              >
-                {isLoading === 'paySenderFee' ? 'Processing...' : 'Pay Arbitration Fee (as Sender)'}
-              </Button>
-              
-              <Button 
-                onClick={handlePayArbitrationFeeReceiver} 
-                disabled={isLoading !== null}
-                variant="secondary" 
-                className="w-full"
-              >
-                {isLoading === 'payReceiverFee' ? 'Processing...' : 'Pay Arbitration Fee (as Receiver)'}
-              </Button>
-            </>
-          )}
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button 
-          onClick={handleSubmitEvidence} 
-          disabled={isLoading !== null}
-          variant="outline" 
-          className="w-full"
-        >
-          Submit Evidence
-        </Button>
-      </CardFooter>
-    </Card>
+    <>
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Transaction Actions</CardTitle>
+          <CardDescription>Available actions for this transaction</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {canReleaseFunds && !hasDispute && (
+              <>
+                <Button 
+                  onClick={handleReleaseFunds} 
+                  disabled={isLoading !== null}
+                  className="w-full"
+                >
+                  {isLoading === 'release' ? 'Processing...' : 'Release Funds to Receiver'}
+                </Button>
+                
+                <Button 
+                  onClick={handleReimburse} 
+                  disabled={isLoading !== null}
+                  variant="outline" 
+                  className="w-full"
+                >
+                  {isLoading === 'reimburse' ? 'Processing...' : 'Reimburse Funds to Sender'}
+                </Button>
+              </>
+            )}
+            
+            {canStartDispute && !hasDispute && (
+              <>
+                <Button 
+                  onClick={handlePayArbitrationFeeSender} 
+                  disabled={isLoading !== null}
+                  variant="secondary" 
+                  className="w-full"
+                >
+                  {isLoading === 'paySenderFee' ? 'Processing...' : 'Pay Arbitration Fee (as Sender)'}
+                </Button>
+                
+                <Button 
+                  onClick={handlePayArbitrationFeeReceiver} 
+                  disabled={isLoading !== null}
+                  variant="secondary" 
+                  className="w-full"
+                >
+                  {isLoading === 'payReceiverFee' ? 'Processing...' : 'Pay Arbitration Fee (as Receiver)'}
+                </Button>
+              </>
+            )}
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button 
+            onClick={() => setEvidenceDialogOpen(true)} 
+            disabled={isLoading !== null}
+            variant="outline" 
+            className="w-full"
+          >
+            {isLoading === 'evidence' ? 'Processing...' : 'Submit Evidence'}
+          </Button>
+        </CardFooter>
+      </Card>
+      
+      <EvidenceDialog
+        isOpen={evidenceDialogOpen}
+        onClose={() => setEvidenceDialogOpen(false)}
+        onSubmit={handleSubmitEvidence}
+        isLoading={isLoading === 'evidence'}
+      />
+    </>
   );
 };
 

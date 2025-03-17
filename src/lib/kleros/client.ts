@@ -40,3 +40,51 @@ export const safeLoadIPFS = async (uri: string) => {
     };
   }
 };
+
+// Function to convert a file to base64
+export const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(file);
+    reader.onload = () => {
+      const buffer = new Uint8Array(reader.result as ArrayBuffer);
+      resolve(buffer as unknown as string);
+    };
+    reader.onerror = (error) => {
+      reject(error);
+    };
+  });
+};
+
+// Function to upload evidence to IPFS
+export const uploadEvidenceToIPFS = async (
+  title: string,
+  description: string,
+  file?: File
+) => {
+  try {
+    let fileURI = undefined;
+    let fileTypeExtension = undefined;
+    
+    // Upload the file to IPFS if provided
+    if (file) {
+      const fileData = await fileToBase64(file);
+      const cid = await klerosClient.services.ipfs.uploadToIPFS(fileData, file.name);
+      fileURI = `/ipfs/${cid}`;
+      fileTypeExtension = file.name.split('.').pop() || '';
+    }
+    
+    // Create and upload the evidence JSON
+    const evidenceData = {
+      title,
+      description,
+      ...(fileURI && { fileURI }),
+      ...(fileTypeExtension && { fileTypeExtension })
+    };
+    
+    return await klerosClient.services.ipfs.uploadEvidence(evidenceData);
+  } catch (error) {
+    console.error("Error uploading evidence to IPFS:", error);
+    throw new Error("Failed to upload evidence to IPFS");
+  }
+};
