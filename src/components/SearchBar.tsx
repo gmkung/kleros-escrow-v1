@@ -39,7 +39,7 @@ const SearchBar = ({ onSearch, className = '' }: SearchBarProps) => {
       <div 
         className={`relative transition-all duration-300 ${
           isFocused 
-            ? 'shadow-subtle scale-[1.01]' 
+            ? 'shadow-[0_0_15px_rgba(139,92,246,0.5)]' 
             : ''
         }`}
       >
@@ -53,9 +53,9 @@ const SearchBar = ({ onSearch, className = '' }: SearchBarProps) => {
           onBlur={() => setIsFocused(false)}
           className={`w-full py-3 pl-12 pr-4 rounded-xl border outline-none transition-all duration-300 ${
             isFocused 
-              ? 'bg-white border-blue-200' 
-              : 'bg-white/70 backdrop-blur-sm border-neutral-200 hover:bg-white/90'
-          }`}
+              ? 'bg-slate-800/90 border-violet-500/50 text-violet-100' 
+              : 'bg-slate-900/70 backdrop-blur-sm border-violet-500/30 text-violet-200 hover:bg-slate-800/80'
+          } placeholder:text-violet-300/60`}
         />
         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
           <svg 
@@ -66,8 +66,8 @@ const SearchBar = ({ onSearch, className = '' }: SearchBarProps) => {
             xmlns="http://www.w3.org/2000/svg"
             className={`transition-colors duration-300 ${
               isFocused 
-                ? 'text-blue-500' 
-                : 'text-neutral-400'
+                ? 'text-violet-400' 
+                : 'text-violet-400/70'
             }`}
           >
             <path 
@@ -86,7 +86,7 @@ const SearchBar = ({ onSearch, className = '' }: SearchBarProps) => {
               setSearchTerm('');
               inputRef.current?.focus();
             }}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-500"
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-violet-400/70 hover:text-violet-300"
           >
             <svg 
               width="16" 

@@ -18,7 +18,7 @@ const Header = () => {
     <header 
       className={`sticky top-0 z-50 w-full py-4 px-6 transition-all duration-300 ${
         scrolled 
-          ? 'bg-white/80 backdrop-blur-md shadow-subtle' 
+          ? 'bg-tron-dark backdrop-blur-md border-b border-violet-500/20' 
           : 'bg-transparent'
       }`}
     >
@@ -27,7 +27,7 @@ const Header = () => {
           to="/" 
           className="flex items-center space-x-2 no-tap-highlight"
         >
-          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-violet-500 flex items-center justify-center">
             <svg 
               width="18" 
               height="18" 
@@ -51,13 +51,13 @@ const Header = () => {
               />
             </svg>
           </div>
-          <span className="text-lg font-semibold text-neutral-900">Kleros Escrow Explorer</span>
+          <span className="text-lg font-semibold text-violet-100">Kleros Escrow Explorer</span>
         </Link>
         
         <nav className="hidden md:flex items-center space-x-6">
           <Link 
             to="/" 
-            className="text-neutral-600 hover:text-neutral-900 text-sm font-medium transition-colors"
+            className="text-violet-300 hover:text-violet-100 text-sm font-medium transition-colors"
           >
             Transactions
           </Link>
@@ -65,7 +65,7 @@ const Header = () => {
             href="https://kleros.io" 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="text-neutral-600 hover:text-neutral-900 text-sm font-medium transition-colors"
+            className="text-violet-300 hover:text-violet-100 text-sm font-medium transition-colors"
           >
             About Kleros
           </a>
@@ -73,7 +73,7 @@ const Header = () => {
             href="https://kleros.gitbook.io/docs/" 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="text-neutral-600 hover:text-neutral-900 text-sm font-medium transition-colors"
+            className="text-violet-300 hover:text-violet-100 text-sm font-medium transition-colors"
           >
             Documentation
           </a>
@@ -83,7 +83,7 @@ const Header = () => {
           href="https://github.com/kleros/escrow" 
           target="_blank" 
           rel="noopener noreferrer" 
-          className="flex items-center justify-center w-10 h-10 rounded-full bg-neutral-100 hover:bg-neutral-200 transition-colors"
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 text-violet-300 transition-colors"
         >
           <svg 
             width="20" 
