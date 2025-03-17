@@ -14,7 +14,7 @@ export interface MetaEvidence {
   description: string;
   question: string;
   rulingOptions: {
-    type: string;
+    type?: string;
     titles: string[];
     descriptions: string[];
   };

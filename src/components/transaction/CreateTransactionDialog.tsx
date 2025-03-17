@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -81,7 +80,6 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
         title: data.title,
         description: data.description,
         category: data.category,
-        amount: data.amount,
         question: "Should the payment be released to the receiver?",
         rulingOptions: {
           titles: ["Release to sender", "Release to receiver"],
