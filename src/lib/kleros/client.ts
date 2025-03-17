@@ -35,7 +35,29 @@ export const createSignerClient = async () => {
     
     await provider.send("eth_requestAccounts", []);
     const signer = provider.getSigner();
-    return createKlerosEscrowClient(klerosConfig, signer);
+    
+    // Create the client with signer and verify that all methods exist
+    const client = createKlerosEscrowClient(klerosConfig, signer);
+    
+    // Debug: Log the structure of the client to help diagnose issues
+    console.log("Client structure:", {
+      actions: Object.keys(client.actions || {}),
+      transaction: Object.keys(client.actions?.transaction || {}),
+      dispute: Object.keys(client.actions?.dispute || {}),
+      evidence: Object.keys(client.actions?.evidence || {})
+    });
+    
+    // Ensure all expected methods exist
+    if (!client.actions || 
+        !client.actions.transaction || 
+        !client.actions.dispute || 
+        !client.actions.evidence ||
+        !client.actions.evidence.submitEvidence) {
+      console.error("Missing expected methods in kleros client:", client);
+      throw new Error("The Kleros client is missing expected methods. Please check console for details.");
+    }
+    
+    return client;
   }
   throw new Error("Ethereum provider not available");
 };
@@ -101,7 +123,6 @@ export const uploadEvidenceToIPFS = async (
     };
     
     // The uploadEvidence function may also be returning paths with /ipfs/ prefix
-    // So we need to ensure we don't use it as-is without checking
     const evidenceUri = await klerosClient.services.ipfs.uploadEvidence(evidenceData);
     console.log("Evidence URI before return:", evidenceUri);
     return evidenceUri;

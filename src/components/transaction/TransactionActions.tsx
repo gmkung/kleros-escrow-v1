@@ -39,6 +39,8 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
       setIsLoading('release');
       const signerClient = await createSignerClient();
       
+      console.log("Transaction client methods:", signerClient.actions.transaction);
+      
       const tx = await signerClient.actions.transaction.pay({
         transactionId: transaction.id,
         amount: transaction.amount,
@@ -77,6 +79,11 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
     try {
       setIsLoading('reimburse');
       const signerClient = await createSignerClient();
+      
+      console.log("About to call reimburse with:", {
+        transactionId: transaction.id,
+        amount: transaction.amount
+      });
       
       const tx = await signerClient.actions.transaction.reimburse({
         transactionId: transaction.id,
@@ -125,8 +132,13 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
       
       console.log("Evidence URI received from uploadEvidenceToIPFS:", evidenceURI);
       
-      // Submit evidence to blockchain
+      // Get signer client
       const signerClient = await createSignerClient();
+      
+      // Debug: Check what methods are available
+      console.log("Evidence client methods:", signerClient.actions.evidence);
+      
+      // Submit evidence to blockchain
       const tx = await signerClient.actions.evidence.submitEvidence({
         transactionId: transaction.id,
         evidence: evidenceURI,
@@ -167,8 +179,16 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
       setIsLoading('paySenderFee');
       const signerClient = await createSignerClient();
       
+      // Debug: Check dispute methods
+      console.log("Dispute client methods:", signerClient.actions.dispute);
+      
       // Get arbitration cost
       const arbitrationCost = await klerosClient.services.dispute.getArbitrationCost();
+      
+      console.log("About to pay arbitration fee as sender:", {
+        transactionId: transaction.id,
+        value: arbitrationCost
+      });
       
       const tx = await signerClient.actions.dispute.payArbitrationFeeBySender({
         transactionId: transaction.id,
@@ -211,6 +231,11 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
       
       // Get arbitration cost
       const arbitrationCost = await klerosClient.services.dispute.getArbitrationCost();
+      
+      console.log("About to pay arbitration fee as receiver:", {
+        transactionId: transaction.id,
+        value: arbitrationCost
+      });
       
       const tx = await signerClient.actions.dispute.payArbitrationFeeByReceiver({
         transactionId: transaction.id,
