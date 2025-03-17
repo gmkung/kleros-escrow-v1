@@ -16,7 +16,13 @@ export const klerosClient = createKlerosEscrowClient(klerosConfig);
 // This function creates a connected client with a signer when needed
 export const createSignerClient = async () => {
   if (typeof window !== "undefined" && window.ethereum) {
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    // Create a provider that doesn't try to use ENS
+    const provider = new ethers.providers.Web3Provider(window.ethereum, {
+      name: 'unknown',
+      chainId: 1,
+      ensAddress: null // This disables ENS lookups
+    });
+    
     await provider.send("eth_requestAccounts", []);
     const signer = provider.getSigner();
     return createKlerosEscrowClient(klerosConfig, signer);

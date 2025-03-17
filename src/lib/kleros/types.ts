@@ -1,4 +1,3 @@
-
 export interface MetaEvidenceEvent {
   id: string;
   blockTimestamp: string;
@@ -25,6 +24,18 @@ export interface MetaEvidence {
   timeout?: number;
   fileURI?: string;
   fileTypeExtension?: string;
+  token?: {
+    name: string;
+    ticker: string;
+    symbolURI?: string;
+    address: string | null;
+    decimals: number;
+  };
+  evidenceDisplayInterfaceURI?: string;
+  extraData?: Record<string, string>;
+  aliases?: Record<string, string>;
+  invoice?: boolean;
+  arbitrableAddress?: string;
 }
 
 export interface TransactionEvents {
