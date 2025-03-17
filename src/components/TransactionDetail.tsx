@@ -12,6 +12,7 @@ import ParticipatingParties from './transaction/ParticipatingParties';
 import TransactionTimeline from './transaction/TransactionTimeline';
 import TransactionSkeleton from './transaction/TransactionSkeleton';
 import ErrorState from './transaction/ErrorState';
+import TransactionActions from './transaction/TransactionActions';
 
 const TransactionDetail = () => {
   const { toast } = useToast();
@@ -22,57 +23,57 @@ const TransactionDetail = () => {
   const [transaction, setTransaction] = useState<any>(null);
   const [transactionEvents, setTransactionEvents] = useState<any>(null);
   
-  useEffect(() => {
-    const loadTransactionDetails = async () => {
-      if (!id) return;
-      
-      try {
-        setLoading(true);
-        
-        const allTx = await klerosClient.services.event.getAllMetaEvidence();
-        const transactionMetaEvidence = allTx.find(tx => tx._metaEvidenceID === id);
-        
-        if (!transactionMetaEvidence) {
-          throw new Error('Transaction not found');
-        }
-        
-        const metaData = await safeLoadIPFS(transactionMetaEvidence._evidence);
-        
-        const events = await klerosClient.services.event.getTransactionDetails(id);
-        
-        setTransaction({
-          id,
-          timestamp: new Date(parseInt(transactionMetaEvidence.blockTimestamp) * 1000),
-          title: metaData.title || 'Untitled Transaction',
-          description: metaData.description || 'No description available',
-          amount: metaData.amount || '0',
-          category: metaData.category || 'Uncategorized',
-          sender: metaData.sender || 'Unknown',
-          receiver: metaData.receiver || 'Unknown',
-          transactionHash: transactionMetaEvidence.transactionHash,
-          blockNumber: transactionMetaEvidence.blockNumber,
-          status: getTransactionStatus(events),
-          question: metaData.question || '',
-          timeout: metaData.timeout || 0,
-          rulingOptions: metaData.rulingOptions || { titles: [], descriptions: [] },
-          aliases: metaData.aliases || {},
-        });
-        
-        setTransactionEvents(events);
-        setError(null);
-      } catch (err: any) {
-        console.error('Failed to load transaction details:', err);
-        setError(err.message || 'Failed to load transaction details');
-        toast({
-          title: "Error loading transaction",
-          description: err.message || "Transaction details could not be loaded",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadTransactionDetails = async () => {
+    if (!id) return;
     
+    try {
+      setLoading(true);
+      
+      const allTx = await klerosClient.services.event.getAllMetaEvidence();
+      const transactionMetaEvidence = allTx.find(tx => tx._metaEvidenceID === id);
+      
+      if (!transactionMetaEvidence) {
+        throw new Error('Transaction not found');
+      }
+      
+      const metaData = await safeLoadIPFS(transactionMetaEvidence._evidence);
+      
+      const events = await klerosClient.services.event.getTransactionDetails(id);
+      
+      setTransaction({
+        id,
+        timestamp: new Date(parseInt(transactionMetaEvidence.blockTimestamp) * 1000),
+        title: metaData.title || 'Untitled Transaction',
+        description: metaData.description || 'No description available',
+        amount: metaData.amount || '0',
+        category: metaData.category || 'Uncategorized',
+        sender: metaData.sender || 'Unknown',
+        receiver: metaData.receiver || 'Unknown',
+        transactionHash: transactionMetaEvidence.transactionHash,
+        blockNumber: transactionMetaEvidence.blockNumber,
+        status: getTransactionStatus(events),
+        question: metaData.question || '',
+        timeout: metaData.timeout || 0,
+        rulingOptions: metaData.rulingOptions || { titles: [], descriptions: [] },
+        aliases: metaData.aliases || {},
+      });
+      
+      setTransactionEvents(events);
+      setError(null);
+    } catch (err: any) {
+      console.error('Failed to load transaction details:', err);
+      setError(err.message || 'Failed to load transaction details');
+      toast({
+        title: "Error loading transaction",
+        description: err.message || "Transaction details could not be loaded",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  useEffect(() => {
     loadTransactionDetails();
   }, [id, toast]);
   
@@ -89,6 +90,13 @@ const TransactionDetail = () => {
       <TransactionDetailHeader />
       
       <TransactionSummary transaction={transaction} />
+      
+      {/* Add the Transaction Actions component */}
+      <TransactionActions 
+        transaction={transaction} 
+        transactionEvents={transactionEvents} 
+        onAction={loadTransactionDetails}
+      />
       
       <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden mb-8 shadow-card">
         <div className="p-6">
