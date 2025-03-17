@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
@@ -178,6 +179,9 @@ const TransactionDetail = () => {
                 className="text-lg font-semibold text-blue-600 hover:text-blue-700 transition-colors"
               >
                 {formatAddress(transaction.sender)}
+                {transaction.aliases && transaction.aliases[transaction.sender] && 
+                  <span className="ml-2 text-neutral-500 text-sm">({transaction.aliases[transaction.sender]})</span>
+                }
               </a>
             </div>
             
@@ -190,6 +194,9 @@ const TransactionDetail = () => {
                 className="text-lg font-semibold text-blue-600 hover:text-blue-700 transition-colors"
               >
                 {formatAddress(transaction.receiver)}
+                {transaction.aliases && transaction.aliases[transaction.receiver] && 
+                  <span className="ml-2 text-neutral-500 text-sm">({transaction.aliases[transaction.receiver]})</span>
+                }
               </a>
             </div>
           </div>
@@ -198,6 +205,43 @@ const TransactionDetail = () => {
             <div className="mt-6 border-t border-neutral-200 pt-6">
               <h3 className="text-lg font-semibold text-neutral-900 mb-2">Arbitration Question</h3>
               <p className="text-neutral-600">{transaction.question}</p>
+              
+              {transaction.rulingOptions && transaction.rulingOptions.titles && transaction.rulingOptions.titles.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="text-md font-medium text-neutral-800 mb-2">Ruling Options</h4>
+                  <div className="space-y-3">
+                    {transaction.rulingOptions.titles.map((title: string, index: number) => (
+                      <div key={`ruling-${index}`} className="bg-neutral-50 rounded-lg p-3">
+                        <div className="font-medium text-neutral-900">{index + 1}. {title}</div>
+                        {transaction.rulingOptions.descriptions && transaction.rulingOptions.descriptions[index] && (
+                          <div className="text-sm text-neutral-600 mt-1">{transaction.rulingOptions.descriptions[index]}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {transaction.aliases && Object.keys(transaction.aliases).length > 0 && (
+            <div className="mt-6 border-t border-neutral-200 pt-6">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-2">Participating Parties</h3>
+              <div className="space-y-2">
+                {Object.entries(transaction.aliases).map(([address, alias]: [string, any]) => (
+                  <div key={address} className="flex items-center">
+                    <span className="font-medium text-neutral-700 mr-2">{alias}:</span>
+                    <a 
+                      href={`https://etherscan.io/address/${address}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-700 transition-colors"
+                    >
+                      {formatAddress(address)}
+                    </a>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
