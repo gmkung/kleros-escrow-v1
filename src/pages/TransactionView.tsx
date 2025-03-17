@@ -1,6 +1,8 @@
 
+import { Suspense } from 'react';
 import Header from '../components/Header';
 import TransactionDetail from '../components/TransactionDetail';
+import TransactionSkeleton from '../components/transaction/TransactionSkeleton';
 
 const TransactionView = () => {
   return (
@@ -8,7 +10,9 @@ const TransactionView = () => {
       <Header />
       
       <main className="flex-1 py-8 grid-pattern">
-        <TransactionDetail />
+        <Suspense fallback={<TransactionSkeleton />}>
+          <TransactionDetail />
+        </Suspense>
       </main>
       
       <footer className="bg-tron-dark py-8 text-white/90 border-t border-violet-500/20">
