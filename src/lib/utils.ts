@@ -43,6 +43,21 @@ export function debounce<T extends (...args: any[]) => any>(
   return debounced;
 }
 
+// Format timestamp function to convert unix timestamp to Date
+export function formatTimestamp(timestamp: string | number): Date {
+  const timestampNumber = typeof timestamp === 'string' ? parseInt(timestamp) : timestamp;
+  return new Date(timestampNumber * 1000);
+}
+
+// Format date function to return a formatted date string
+export function formatDate(date: Date): string {
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
+
 // Search function for transactions
 export const searchTransactions = (transactions: ProcessedTransaction[], searchTerm: string): ProcessedTransaction[] => {
   const term = searchTerm.toLowerCase().trim();
