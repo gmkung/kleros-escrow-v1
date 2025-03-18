@@ -1,3 +1,4 @@
+
 import { ethers } from 'ethers';
 
 // Function to format currency
@@ -56,4 +57,19 @@ export const getTransactionStatus = (events: any) => {
   return 'NoDispute';
 };
 
-// Format an Ethereum address to a shortened format
+// Convert backend status to UI status
+export const mapTransactionStatus = (backendStatus: string): 'pending' | 'completed' | 'disputed' | 'unknown' | 'NoDispute' => {
+  switch (backendStatus) {
+    case 'Resolved':
+      return 'completed';
+    case 'DisputeCreated':
+      return 'disputed';
+    case 'WaitingSender':
+    case 'WaitingReceiver':
+      return 'pending';
+    case 'NoDispute':
+      return 'NoDispute';
+    default:
+      return 'unknown';
+  }
+};

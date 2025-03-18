@@ -2,7 +2,7 @@
 import { cn } from '../lib/utils';
 
 interface StatusBadgeProps {
-  status: 'pending' | 'completed' | 'disputed' | 'unknown';
+  status: 'pending' | 'completed' | 'disputed' | 'unknown' | 'NoDispute';
   className?: string;
 }
 
@@ -95,9 +95,20 @@ const statusConfig = {
       </svg>
     ),
   },
+  // Adding NoDispute configuration but it won't be rendered
+  NoDispute: {
+    label: '',
+    className: '',
+    icon: null,
+  },
 };
 
 const StatusBadge = ({ status, className = '' }: StatusBadgeProps) => {
+  // Don't render the badge if status is NoDispute
+  if (status === 'NoDispute') {
+    return null;
+  }
+  
   const config = statusConfig[status];
   
   return (
