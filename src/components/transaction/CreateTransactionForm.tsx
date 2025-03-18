@@ -63,8 +63,7 @@ const CreateTransactionForm = ({
                   <FormControl>
                     <Input 
                       placeholder="Project payment" 
-                      {...field} 
-                      className="border-violet-500/30 bg-tron-dark/50 text-violet-100 focus-visible:ring-violet-500/50 focus-visible:border-violet-500/50" 
+                      {...field}
                     />
                   </FormControl>
                   <FormDescription className="text-violet-300/70">
@@ -85,7 +84,7 @@ const CreateTransactionForm = ({
                   <FormControl>
                     <Textarea
                       placeholder="Detailed description of the agreement..."
-                      className="min-h-[120px] border-violet-500/30 bg-tron-dark/50 text-violet-100 focus-visible:ring-violet-500/50 focus-visible:border-violet-500/50"
+                      className="min-h-[120px]"
                       {...field}
                     />
                   </FormControl>
@@ -111,8 +110,7 @@ const CreateTransactionForm = ({
                   <FormControl>
                     <Input 
                       placeholder="Services" 
-                      {...field} 
-                      className="border-violet-500/30 bg-tron-dark/50 text-violet-100 focus-visible:ring-violet-500/50 focus-visible:border-violet-500/50" 
+                      {...field}
                     />
                   </FormControl>
                   <FormDescription className="text-violet-300/70">
@@ -133,8 +131,8 @@ const CreateTransactionForm = ({
                   <FormControl>
                     <Input 
                       placeholder="0x..." 
-                      {...field} 
-                      className="border-violet-500/30 bg-tron-dark/50 text-violet-100 focus-visible:ring-violet-500/50 focus-visible:border-violet-500/50 font-mono" 
+                      {...field}
+                      className="font-mono"
                     />
                   </FormControl>
                   <FormDescription className="text-violet-300/70">
@@ -163,8 +161,7 @@ const CreateTransactionForm = ({
                       <Input 
                         placeholder="0.1" 
                         type="text" 
-                        {...field} 
-                        className="border-violet-500/30 bg-tron-dark/50 text-violet-100 focus-visible:ring-violet-500/50 focus-visible:border-violet-500/50" 
+                        {...field}
                       />
                     </FormControl>
                     <FormDescription className="text-violet-300/70">
@@ -192,8 +189,7 @@ const CreateTransactionForm = ({
                       <Input 
                         placeholder="30" 
                         type="text" 
-                        {...field} 
-                        className="border-violet-500/30 bg-tron-dark/50 text-violet-100 focus-visible:ring-violet-500/50 focus-visible:border-violet-500/50" 
+                        {...field}
                       />
                     </FormControl>
                     <FormDescription className="text-violet-300/70">
