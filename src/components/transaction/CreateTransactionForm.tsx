@@ -61,12 +61,16 @@ const CreateTransactionForm = ({
                 <FormItem>
                   <FormLabel className="text-violet-100">Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Project payment" {...field} className="border-violet-500/30 bg-tron-dark/50 text-violet-100" />
+                    <Input 
+                      placeholder="Project payment" 
+                      {...field} 
+                      className="border-violet-500/30 bg-tron-dark/50 text-violet-100 focus-visible:ring-violet-500/50 focus-visible:border-violet-500/50" 
+                    />
                   </FormControl>
                   <FormDescription className="text-violet-300/70">
                     A short title describing this transaction
                   </FormDescription>
-                  <FormMessage />
+                  <FormMessage className="text-red-400" />
                 </FormItem>
               )}
             />
@@ -81,14 +85,14 @@ const CreateTransactionForm = ({
                   <FormControl>
                     <Textarea
                       placeholder="Detailed description of the agreement..."
-                      className="min-h-[120px] border-violet-500/30 bg-tron-dark/50 text-violet-100"
+                      className="min-h-[120px] border-violet-500/30 bg-tron-dark/50 text-violet-100 focus-visible:ring-violet-500/50 focus-visible:border-violet-500/50"
                       {...field}
                     />
                   </FormControl>
                   <FormDescription className="text-violet-300/70">
                     Detail the terms of the agreement and what constitutes successful completion
                   </FormDescription>
-                  <FormMessage />
+                  <FormMessage className="text-red-400" />
                 </FormItem>
               )}
             />
@@ -105,12 +109,16 @@ const CreateTransactionForm = ({
                 <FormItem>
                   <FormLabel className="text-violet-100">Category</FormLabel>
                   <FormControl>
-                    <Input placeholder="Services" {...field} className="border-violet-500/30 bg-tron-dark/50 text-violet-100" />
+                    <Input 
+                      placeholder="Services" 
+                      {...field} 
+                      className="border-violet-500/30 bg-tron-dark/50 text-violet-100 focus-visible:ring-violet-500/50 focus-visible:border-violet-500/50" 
+                    />
                   </FormControl>
                   <FormDescription className="text-violet-300/70">
                     Category of transaction (e.g., Services, Goods, Digital Assets)
                   </FormDescription>
-                  <FormMessage />
+                  <FormMessage className="text-red-400" />
                 </FormItem>
               )}
             />
@@ -123,12 +131,16 @@ const CreateTransactionForm = ({
                 <FormItem>
                   <FormLabel className="text-violet-100">Receiver Ethereum Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="0x..." {...field} className="border-violet-500/30 bg-tron-dark/50 text-violet-100" />
+                    <Input 
+                      placeholder="0x..." 
+                      {...field} 
+                      className="border-violet-500/30 bg-tron-dark/50 text-violet-100 focus-visible:ring-violet-500/50 focus-visible:border-violet-500/50 font-mono" 
+                    />
                   </FormControl>
                   <FormDescription className="text-violet-300/70">
                     The Ethereum address that will receive the payment if completed successfully
                   </FormDescription>
-                  <FormMessage />
+                  <FormMessage className="text-red-400" />
                 </FormItem>
               )}
             />
@@ -148,12 +160,17 @@ const CreateTransactionForm = ({
                   <FormItem>
                     <FormLabel className="text-violet-100">Amount (ETH)</FormLabel>
                     <FormControl>
-                      <Input placeholder="0.1" type="text" {...field} className="border-violet-500/30 bg-tron-dark/50 text-violet-100" />
+                      <Input 
+                        placeholder="0.1" 
+                        type="text" 
+                        {...field} 
+                        className="border-violet-500/30 bg-tron-dark/50 text-violet-100 focus-visible:ring-violet-500/50 focus-visible:border-violet-500/50" 
+                      />
                     </FormControl>
                     <FormDescription className="text-violet-300/70">
                       Amount to be held in escrow
                     </FormDescription>
-                    <FormMessage />
+                    <FormMessage className="text-red-400" />
                   </FormItem>
                 )}
               />
@@ -172,12 +189,17 @@ const CreateTransactionForm = ({
                   <FormItem>
                     <FormLabel className="text-violet-100">Timeout (days)</FormLabel>
                     <FormControl>
-                      <Input placeholder="30" type="text" {...field} className="border-violet-500/30 bg-tron-dark/50 text-violet-100" />
+                      <Input 
+                        placeholder="30" 
+                        type="text" 
+                        {...field} 
+                        className="border-violet-500/30 bg-tron-dark/50 text-violet-100 focus-visible:ring-violet-500/50 focus-visible:border-violet-500/50" 
+                      />
                     </FormControl>
                     <FormDescription className="text-violet-300/70">
                       Days until timeout can be executed
                     </FormDescription>
-                    <FormMessage />
+                    <FormMessage className="text-red-400" />
                   </FormItem>
                 )}
               />
@@ -191,7 +213,7 @@ const CreateTransactionForm = ({
             variant="outline"
             onClick={onCancel}
             disabled={isSubmitting}
-            className="border-violet-500/30 bg-tron-dark/50 text-violet-100 hover:bg-tron-dark/70"
+            className="border-violet-500/30 bg-tron-dark/50 text-violet-100 hover:bg-tron-dark/70 hover:border-violet-500/50"
           >
             Cancel
           </Button>

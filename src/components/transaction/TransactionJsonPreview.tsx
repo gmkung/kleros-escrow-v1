@@ -42,7 +42,7 @@ const TransactionJsonPreview = ({
     <div className="space-y-4">
       <Card className="border-violet-500/30 bg-tron-dark/30">
         <CardContent className="pt-6">
-          <pre className="bg-tron-dark/60 p-4 rounded-md border border-violet-500/20 text-violet-100 overflow-auto max-h-[400px] text-sm">
+          <pre className="bg-tron-dark/60 p-4 rounded-md border border-violet-500/20 text-violet-100 overflow-auto max-h-[400px] text-sm font-mono thin-scrollbar">
             {JSON.stringify(jsonPreview, null, 2)}
           </pre>
           <p className="text-violet-300/70 text-sm mt-4">
@@ -57,7 +57,7 @@ const TransactionJsonPreview = ({
           variant="outline"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="border-violet-500/30 bg-tron-dark/50 text-violet-100 hover:bg-tron-dark/70"
+          className="border-violet-500/30 bg-tron-dark/50 text-violet-100 hover:bg-tron-dark/70 hover:border-violet-500/50"
         >
           Cancel
         </Button>
