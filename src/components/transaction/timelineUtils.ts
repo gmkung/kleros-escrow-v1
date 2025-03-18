@@ -19,8 +19,8 @@ export const processTimelineEvents = (transactionEvents: any, transaction: any):
     type: 'create',
     title: "Transaction Created",
     description: `Escrow transaction created between ${formatAddress(transaction.sender)} and ${formatAddress(transaction.receiver)}`,
-    timestamp: transaction.timestamp.getTime() / 1000 + '',
-    transactionHash: transaction.transactionHash,
+    timestamp: transaction.timestamp ? (transaction.timestamp.getTime() / 1000) + '' : Date.now() / 1000 + '',
+    transactionHash: transaction.transactionHash || '',
   });
   
   // Payment events
@@ -29,9 +29,9 @@ export const processTimelineEvents = (transactionEvents: any, transaction: any):
       timelineEvents.push({
         type: 'payment',
         title: "Payment Made",
-        description: `${formatAmount(payment._amount)} paid by ${formatAddress(payment._party)}`,
-        timestamp: payment.blockTimestamp,
-        transactionHash: payment.transactionHash,
+        description: `${formatAmount(payment._amount || '0')} paid by ${formatAddress(payment._party)}`,
+        timestamp: payment.blockTimestamp || Date.now() / 1000 + '',
+        transactionHash: payment.transactionHash || '',
       });
     });
   }
@@ -43,8 +43,8 @@ export const processTimelineEvents = (transactionEvents: any, transaction: any):
         type: 'evidence',
         title: "Evidence Submitted",
         description: `Evidence submitted by ${formatAddress(evidence._party)}`,
-        timestamp: evidence.blockNumber,
-        transactionHash: evidence.transactionHash,
+        timestamp: evidence.blockNumber || Date.now() / 1000 + '',
+        transactionHash: evidence.transactionHash || '',
       });
     });
   }
@@ -56,8 +56,8 @@ export const processTimelineEvents = (transactionEvents: any, transaction: any):
         type: 'dispute',
         title: "Dispute Created",
         description: "Transaction is now in dispute resolution",
-        timestamp: dispute.blockTimestamp,
-        transactionHash: dispute.transactionHash,
+        timestamp: dispute.blockTimestamp || Date.now() / 1000 + '',
+        transactionHash: dispute.transactionHash || '',
       });
     });
   }
@@ -69,8 +69,8 @@ export const processTimelineEvents = (transactionEvents: any, transaction: any):
         type: 'fee',
         title: "Arbitration Fee Required",
         description: `${formatAddress(fee._party)} needs to pay arbitration fees`,
-        timestamp: fee.blockTimestamp,
-        transactionHash: fee.transactionHash,
+        timestamp: fee.blockTimestamp || Date.now() / 1000 + '',
+        transactionHash: fee.transactionHash || '',
       });
     });
   }
@@ -78,15 +78,16 @@ export const processTimelineEvents = (transactionEvents: any, transaction: any):
   // Ruling events
   if (transactionEvents.rulings && transactionEvents.rulings.length > 0) {
     transactionEvents.rulings.forEach((ruling: any) => {
+      const rulingNumber = ruling._ruling ? parseInt(ruling._ruling) : 0;
       timelineEvents.push({
         type: 'ruling',
         title: "Ruling Given",
         description: `Final ruling: ${
-          transaction.rulingOptions?.titles?.[parseInt(ruling._ruling)] || 
+          transaction.rulingOptions?.titles?.[rulingNumber] || 
           `Ruling #${ruling._ruling}`
         }`,
-        timestamp: ruling.blockTimestamp,
-        transactionHash: ruling.transactionHash,
+        timestamp: ruling.blockTimestamp || Date.now() / 1000 + '',
+        transactionHash: ruling.transactionHash || '',
       });
     });
   }
@@ -96,14 +97,16 @@ export const processTimelineEvents = (transactionEvents: any, transaction: any):
     const lastPayment = transactionEvents.payments.slice(-1)[0];
     const lastRuling = transactionEvents.rulings?.slice(-1)[0];
     
-    if (!lastRuling || new Date(parseInt(lastPayment.blockTimestamp) * 1000) > 
-                       new Date(parseInt(lastRuling.blockTimestamp) * 1000)) {
+    if (!lastRuling || 
+       (lastPayment.blockTimestamp && lastRuling.blockTimestamp && 
+        new Date(parseInt(lastPayment.blockTimestamp) * 1000) > 
+        new Date(parseInt(lastRuling.blockTimestamp) * 1000))) {
       timelineEvents.push({
         type: 'final',
         title: "Final Payment",
-        description: `${formatAmount(lastPayment._amount)} transferred to recipient`,
-        timestamp: lastPayment.blockTimestamp,
-        transactionHash: lastPayment.transactionHash,
+        description: `${formatAmount(lastPayment._amount || '0')} transferred to recipient`,
+        timestamp: lastPayment.blockTimestamp || Date.now() / 1000 + '',
+        transactionHash: lastPayment.transactionHash || '',
       });
     }
   }

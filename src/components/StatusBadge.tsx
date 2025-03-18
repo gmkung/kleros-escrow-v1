@@ -95,11 +95,28 @@ const statusConfig = {
       </svg>
     ),
   },
-  // Adding NoDispute configuration but it won't be rendered
+  // Adding NoDispute configuration
   NoDispute: {
-    label: '',
-    className: '',
-    icon: null,
+    label: 'Pending',
+    className: 'status-badge-pending',
+    icon: (
+      <svg 
+        width="12" 
+        height="12" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        xmlns="http://www.w3.org/2000/svg" 
+        className="mr-1"
+      >
+        <path 
+          d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" 
+          stroke="currentColor" 
+          strokeWidth="2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
   },
 };
 
@@ -109,7 +126,8 @@ const StatusBadge = ({ status, className = '' }: StatusBadgeProps) => {
     return null;
   }
   
-  const config = statusConfig[status];
+  // Fallback to unknown if status config is missing
+  const config = statusConfig[status] || statusConfig.unknown;
   
   return (
     <span className={cn('status-badge', config.className, className)}>

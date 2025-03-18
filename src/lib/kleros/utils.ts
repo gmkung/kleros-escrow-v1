@@ -4,17 +4,22 @@ import { ethers } from 'ethers';
 // Function to format currency
 export const formatAmount = (amount: string | number, decimals: number = 18): string => {
   try {
+    // Check if amount is already in decimal format (like "1.3")
+    if (typeof amount === 'string' && amount.includes('.')) {
+      return amount;
+    }
+    
     const formattedAmount = ethers.utils.formatUnits(amount.toString(), decimals);
     return formattedAmount;
   } catch (error) {
     console.error("Error formatting amount:", error);
-    return '0';
+    return amount?.toString() || '0';
   }
 };
 
 // Function to shorten an Ethereum address
-export const formatAddress = (address: string): string => {
-  if (!address) return 'Unknown';
+export const formatAddress = (address: string | undefined | null): string => {
+  if (!address || typeof address !== 'string') return 'Unknown';
   return address.slice(0, 6) + '...' + address.slice(-4);
 };
 
