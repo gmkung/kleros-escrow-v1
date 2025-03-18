@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-import { klerosClient, safeLoadIPFS, getTransactionStatus } from '../lib/kleros';
+import { klerosClient, safeLoadIPFS } from '../lib/kleros';
 
 // Import refactored components
 import TransactionDetailHeader from './transaction/TransactionDetailHeader';
@@ -38,6 +38,8 @@ const TransactionDetail = () => {
       
       const metaData = await safeLoadIPFS(transactionMetaEvidence._evidence);
       
+      // Updated to use services.transaction.getTransaction instead of getTransactionDetails
+      const transactionDetails = await klerosClient.services.transaction.getTransaction(id);
       const events = await klerosClient.services.event.getTransactionDetails(id);
       
       setTransaction({
@@ -45,13 +47,13 @@ const TransactionDetail = () => {
         timestamp: new Date(parseInt(transactionMetaEvidence.blockTimestamp) * 1000),
         title: metaData.title || 'Untitled Transaction',
         description: metaData.description || 'No description available',
-        amount: metaData.amount || '0',
+        amount: metaData.amount || transactionDetails.amount || '0',
         category: metaData.category || 'Uncategorized',
-        sender: metaData.sender || 'Unknown',
-        receiver: metaData.receiver || 'Unknown',
+        sender: metaData.sender || transactionDetails.sender || 'Unknown',
+        receiver: metaData.receiver || transactionDetails.receiver || 'Unknown',
         transactionHash: transactionMetaEvidence.transactionHash,
         blockNumber: transactionMetaEvidence.blockNumber,
-        status: getTransactionStatus(events),
+        status: transactionDetails.status || 'Unknown',
         question: metaData.question || '',
         timeout: metaData.timeout || 0,
         rulingOptions: metaData.rulingOptions || { titles: [], descriptions: [] },
