@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { klerosClient, safeLoadIPFS } from '../lib/kleros';
+import { mapTransactionStatus } from '../lib/kleros/utils';
 
 // Import refactored components
 import TransactionDetailHeader from './transaction/TransactionDetailHeader';
@@ -53,7 +54,7 @@ const TransactionDetail = () => {
         receiver: metaData.receiver || transactionDetails.receiver || 'Unknown',
         transactionHash: transactionMetaEvidence.transactionHash,
         blockNumber: transactionMetaEvidence.blockNumber,
-        status: transactionDetails.status || 'Unknown',
+        status: mapTransactionStatus(transactionDetails.status || 'Unknown'),
         question: metaData.question || '',
         timeout: metaData.timeout || 0,
         rulingOptions: metaData.rulingOptions || { titles: [], descriptions: [] },
