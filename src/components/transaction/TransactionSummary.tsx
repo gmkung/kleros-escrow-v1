@@ -1,4 +1,3 @@
-
 import StatusBadge from '../StatusBadge';
 import { formatAmount, formatAddress } from '../../lib/kleros';
 
@@ -35,6 +34,7 @@ const TransactionSummary = ({ transaction }: TransactionSummaryProps) => {
   return (
     <div>
       <div className="flex justify-between items-start mb-4">
+        {/* Ensure the status badge is displayed with the proper status */}
         <StatusBadge status={transaction.status} />
         <span className="text-sm text-violet-300/70">
           Transaction ID: {transaction.id}

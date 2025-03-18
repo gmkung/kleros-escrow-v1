@@ -121,11 +121,7 @@ const statusConfig = {
 };
 
 const StatusBadge = ({ status, className = '' }: StatusBadgeProps) => {
-  // Don't render the badge if status is NoDispute
-  if (status === 'NoDispute') {
-    return null;
-  }
-  
+  // Make sure we render a badge for NoDispute status as well
   // Fallback to unknown if status config is missing
   const config = statusConfig[status] || statusConfig.unknown;
   
