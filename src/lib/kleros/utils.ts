@@ -73,7 +73,7 @@ export const mapTransactionStatus = (backendStatus: string): 'pending' | 'comple
     case 'WaitingReceiver':
       return 'pending';
     case 'NoDispute':
-      return 'pending'; // Changed from 'NoDispute' to 'pending' to ensure badge is displayed
+      return 'NoDispute'; // Changed back to 'NoDispute' to display the correct badge
     default:
       return 'unknown';
   }

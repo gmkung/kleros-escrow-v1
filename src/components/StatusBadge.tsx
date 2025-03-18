@@ -95,9 +95,9 @@ const statusConfig = {
       </svg>
     ),
   },
-  // Adding NoDispute configuration
+  // Update NoDispute configuration to display "No Dispute" instead of "Pending"
   NoDispute: {
-    label: 'Pending',
+    label: 'No Dispute',
     className: 'status-badge-pending',
     icon: (
       <svg 
