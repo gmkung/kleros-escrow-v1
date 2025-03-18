@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -25,6 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface CreateTransactionDialogProps {
   isOpen: boolean;
@@ -44,6 +46,7 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("form");
 
   const form = useForm<CreateTransactionFormData>({
     defaultValues: {
@@ -136,6 +139,31 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
     }
   };
 
+  // Generate JSON preview data based on form values
+  const getMetaEvidenceJson = () => {
+    const formValues = form.getValues();
+    
+    return {
+      title: formValues.title,
+      description: formValues.description,
+      category: formValues.category,
+      question: "Should the payment be released to the receiver?",
+      rulingOptions: {
+        titles: ["Release to sender", "Release to receiver"],
+        descriptions: [
+          "Funds will be returned to the sender",
+          "Funds will be sent to the receiver",
+        ],
+      },
+      transactionDetails: {
+        receiver: formValues.receiverAddress,
+        value: formValues.amount + " ETH",
+        timeoutPayment: parseInt(formValues.timeoutDays) * 24 * 60 * 60 + " seconds",
+        timeoutInDays: formValues.timeoutDays + " days"
+      }
+    };
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
@@ -146,143 +174,184 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <Tabs defaultValue="form" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="form">Transaction Form</TabsTrigger>
+            <TabsTrigger value="json">JSON Preview</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="form">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                <Card>
+                  <CardContent className="pt-6 space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      rules={{ required: "Title is required" }}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Title</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Project payment" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            A short title describing this transaction
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      rules={{ required: "Description is required" }}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Detailed description of the agreement..."
+                              className="min-h-[120px]"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Detail the terms of the agreement and what constitutes successful completion
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-6 space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="category"
+                      rules={{ required: "Category is required" }}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Category</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Services" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            Category of transaction (e.g., Services, Goods, Digital Assets)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="receiverAddress"
+                      rules={{ required: "Receiver address is required" }}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Receiver Ethereum Address</FormLabel>
+                          <FormControl>
+                            <Input placeholder="0x..." {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            The Ethereum address that will receive the payment if completed successfully
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="amount"
+                        rules={{ 
+                          required: "Amount is required",
+                          pattern: {
+                            value: /^[0-9]*\.?[0-9]+$/,
+                            message: "Must be a valid number"
+                          }
+                        }}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Amount (ETH)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="0.1" type="text" {...field} />
+                            </FormControl>
+                            <FormDescription>
+                              Amount to be held in escrow
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="timeoutDays"
+                        rules={{ 
+                          required: "Timeout is required",
+                          pattern: {
+                            value: /^[0-9]+$/,
+                            message: "Must be a valid number"
+                          }
+                        }}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Timeout (days)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="30" type="text" {...field} />
+                            </FormControl>
+                            <FormDescription>
+                              Days until timeout can be executed
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onClose}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Creating..." : "Create Transaction"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </TabsContent>
+          
+          <TabsContent value="json">
             <Card>
-              <CardContent className="pt-6 space-y-4">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  rules={{ required: "Title is required" }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Project payment" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        A short title describing this transaction
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="description"
-                  rules={{ required: "Description is required" }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Detailed description of the agreement..."
-                          className="min-h-[120px]"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Detail the terms of the agreement and what constitutes successful completion
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                <FormField
-                  control={form.control}
-                  name="category"
-                  rules={{ required: "Category is required" }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Services" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Category of transaction (e.g., Services, Goods, Digital Assets)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="receiverAddress"
-                  rules={{ required: "Receiver address is required" }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Receiver Ethereum Address</FormLabel>
-                      <FormControl>
-                        <Input placeholder="0x..." {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        The Ethereum address that will receive the payment if completed successfully
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="amount"
-                    rules={{ 
-                      required: "Amount is required",
-                      pattern: {
-                        value: /^[0-9]*\.?[0-9]+$/,
-                        message: "Must be a valid number"
-                      }
-                    }}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Amount (ETH)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="0.1" type="text" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          Amount to be held in escrow
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="timeoutDays"
-                    rules={{ 
-                      required: "Timeout is required",
-                      pattern: {
-                        value: /^[0-9]+$/,
-                        message: "Must be a valid number"
-                      }
-                    }}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Timeout (days)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="30" type="text" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          Days until timeout can be executed
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <CardContent className="pt-6">
+                <div className="bg-tron-dark/80 rounded-md p-4 border border-violet-500/30">
+                  <pre className="text-violet-100 text-sm whitespace-pre-wrap overflow-auto max-h-[400px]">
+                    {JSON.stringify(getMetaEvidenceJson(), null, 2)}
+                  </pre>
                 </div>
+                <p className="text-xs text-violet-300/80 mt-2">
+                  This is a preview of the JSON data that will be uploaded to IPFS as meta-evidence for this transaction.
+                </p>
               </CardContent>
             </Card>
-
-            <DialogFooter>
+            
+            <div className="flex justify-end space-x-2 mt-4">
               <Button
                 type="button"
                 variant="outline"
@@ -292,14 +361,14 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
                 Cancel
               </Button>
               <Button
-                type="submit"
+                onClick={() => setActiveTab("form")}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Creating..." : "Create Transaction"}
+                Back to Form
               </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+            </div>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
