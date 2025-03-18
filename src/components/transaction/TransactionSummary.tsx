@@ -4,9 +4,10 @@ import { formatAmount, formatAddress } from '../../lib/kleros';
 
 interface TransactionSummaryProps {
   transaction: any;
+  transactionEvents?: any;
 }
 
-const TransactionSummary = ({ transaction }: TransactionSummaryProps) => {
+const TransactionSummary = ({ transaction, transactionEvents }: TransactionSummaryProps) => {
   const formatDescription = (text: string) => {
     if (!text) return null;
     
@@ -35,7 +36,10 @@ const TransactionSummary = ({ transaction }: TransactionSummaryProps) => {
   return (
     <div>
       <div className="flex justify-between items-start mb-4">
-        <StatusBadge status={transaction.status} />
+        <StatusBadge 
+          status={transaction.status}
+          events={transactionEvents}
+        />
         <span className="text-sm text-violet-300/70">
           Transaction ID: {transaction.id}
         </span>

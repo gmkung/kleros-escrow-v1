@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-import { klerosClient, safeLoadIPFS, getTransactionStatus } from '../lib/kleros';
+import { klerosClient, safeLoadIPFS } from '../lib/kleros';
+import { getTransactionStatus } from '../lib/kleros/utils';
 
 // Import refactored components
 import TransactionDetailHeader from './transaction/TransactionDetailHeader';
@@ -38,7 +39,7 @@ const TransactionDetail = () => {
       
       const metaData = await safeLoadIPFS(transactionMetaEvidence._evidence);
       
-      const events = await klerosClient.services.event.getTransactionDetails(id);
+      const events = await klerosClient.services.transaction.getTransaction(id);
       
       setTransaction({
         id,
@@ -91,7 +92,10 @@ const TransactionDetail = () => {
       
       <div className="card-tron rounded-2xl overflow-hidden mb-8 shadow-lg animate-fadeIn">
         <div className="p-6">
-          <TransactionSummary transaction={transaction} />
+          <TransactionSummary 
+            transaction={transaction} 
+            transactionEvents={transactionEvents}
+          />
           
           {/* Add the Transaction Actions component */}
           <TransactionActions 
