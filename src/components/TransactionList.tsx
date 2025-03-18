@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { ProcessedTransaction, klerosClient, safeLoadIPFS } from '../lib/kleros';
@@ -6,6 +5,16 @@ import { searchTransactions, sortByDate, filterByCategory } from '../lib/utils';
 import TransactionCard from './TransactionCard';
 import SearchBar from './SearchBar';
 import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
+
+const ITEMS_PER_PAGE = 20;
 
 const TransactionList = () => {
   const { toast } = useToast();
@@ -14,7 +23,7 @@ const TransactionList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [visibleCount, setVisibleCount] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   
   const loadTransactions = useCallback(async () => {
     try {
@@ -101,24 +110,63 @@ const TransactionList = () => {
     } else {
       setFilteredTransactions(searchTransactions(transactions, searchTerm));
     }
-    // Reset visible count when search changes
-    setVisibleCount(10);
+    // Reset to first page when search changes
+    setCurrentPage(1);
   }, [searchTerm, transactions]);
   
-  // Load more transactions on scroll
-  const handleScroll = useCallback(() => {
-    if (
-      window.innerHeight + document.documentElement.scrollTop >=
-      document.documentElement.offsetHeight - 500
-    ) {
-      setVisibleCount(prev => Math.min(prev + 10, filteredTransactions.length));
-    }
-  }, [filteredTransactions.length]);
+  // Calculate pagination values
+  const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
+  const paginatedTransactions = filteredTransactions.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
   
-  useEffect(() => {
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
+  // Go to specific page
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxPagesToShow = 5;
+    
+    if (totalPages <= maxPagesToShow) {
+      // If there are fewer pages than maxPagesToShow, show all pages
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show first page, last page, current page, and pages around current
+      if (currentPage <= 3) {
+        // If current page is near the start
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push(null); // Ellipsis
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        // If current page is near the end
+        pages.push(1);
+        pages.push(null); // Ellipsis
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // If current page is in the middle
+        pages.push(1);
+        pages.push(null); // Ellipsis
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push(null); // Ellipsis
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
   
   return (
     <div className="w-full max-w-5xl mx-auto px-4">
@@ -163,21 +211,66 @@ const TransactionList = () => {
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {filteredTransactions.slice(0, visibleCount).map((tx, index) => (
-            <TransactionCard 
-              key={tx.id} 
-              transaction={tx} 
-              delayAnimation={index > 3}
-            />
-          ))}
+        <>
+          <div className="space-y-4 mb-8">
+            {paginatedTransactions.map((tx, index) => (
+              <TransactionCard 
+                key={tx.id} 
+                transaction={tx} 
+                delayAnimation={index > 3}
+              />
+            ))}
+          </div>
           
-          {visibleCount < filteredTransactions.length && (
-            <div className="text-center py-8">
-              <Skeleton className="w-8 h-8 rounded-full mx-auto" />
-            </div>
+          {totalPages > 1 && (
+            <Pagination className="mb-12">
+              <PaginationContent>
+                {currentPage > 1 && (
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => goToPage(currentPage - 1)}
+                      className="cursor-pointer bg-tron-dark/80 text-violet-200 hover:bg-violet-900/40 hover:text-violet-100 border-violet-700/30"
+                    />
+                  </PaginationItem>
+                )}
+                
+                {getPageNumbers().map((page, i) => (
+                  page === null ? (
+                    <PaginationItem key={`ellipsis-${i}`}>
+                      <PaginationLink
+                        className="cursor-default bg-transparent text-violet-300"
+                      >
+                        ...
+                      </PaginationLink>
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={`page-${page}`}>
+                      <PaginationLink
+                        isActive={page === currentPage}
+                        onClick={() => goToPage(page as number)}
+                        className={`cursor-pointer ${page === currentPage
+                          ? 'bg-violet-600/70 text-violet-100 border-violet-500'
+                          : 'bg-tron-dark/80 text-violet-300 hover:bg-violet-900/40 hover:text-violet-100 border-violet-700/30'
+                        }`}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                ))}
+                
+                {currentPage < totalPages && (
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => goToPage(currentPage + 1)}
+                      className="cursor-pointer bg-tron-dark/80 text-violet-200 hover:bg-violet-900/40 hover:text-violet-100 border-violet-700/30"
+                    />
+                  </PaginationItem>
+                )}
+              </PaginationContent>
+            </Pagination>
           )}
-        </div>
+        </>
       )}
     </div>
   );
