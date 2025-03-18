@@ -18,7 +18,7 @@ const Index = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-12">
             <div className="glass card-tron p-6 rounded-xl border border-violet-500/30 animate-pulse-glow">
               <h1 className="text-3xl md:text-4xl font-bold mb-4 neon-text bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-indigo-300">
-                Kleros Escrow Transaction Explorer
+                Kleros Escrow
               </h1>
               <p className="text-violet-100/90 max-w-2xl">
                 Browse and search through escrow transactions processed through the Kleros arbitration protocol.
@@ -47,7 +47,7 @@ const Index = () => {
       <footer className="bg-tron-dark py-8 text-white/90 border-t border-violet-500/20">
         <div className="max-w-5xl mx-auto px-4 text-center">
           <p className="text-sm text-violet-300/80">
-            Powered by <a href="https://kleros.io" className="text-violet-300 hover:text-violet-200 transition-colors">Kleros Protocol</a>
+            Powered by <a href="https://kleros.io" className="text-violet-300 hover:text-violet-200 transition-colors">Kleros Protocol</a> · <span className="text-violet-300/60">v1 · Ethereum Mainnet</span>
           </p>
         </div>
       </footer>

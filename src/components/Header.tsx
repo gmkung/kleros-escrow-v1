@@ -51,7 +51,8 @@ const Header = () => {
               />
             </svg>
           </div>
-          <span className="text-lg font-semibold text-violet-100">Kleros Escrow Explorer</span>
+          <span className="text-lg font-semibold text-violet-100">Kleros Escrow</span>
+          <span className="text-xs px-2 py-0.5 bg-violet-500/20 rounded-full text-violet-300">v1 · Mainnet</span>
         </Link>
         
         <nav className="hidden md:flex items-center space-x-6">
