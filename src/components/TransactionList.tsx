@@ -42,18 +42,28 @@ const TransactionList = () => {
             const metaData = await safeLoadIPFS(tx._evidence);
             console.log("Metadata loaded:", metaData);
             
-            // Get transaction details to determine status
-            const details = await klerosClient.services.event.getTransactionDetails(tx._metaEvidenceID);
-            console.log("Transaction details:", details);
+            // Get transaction details using services.transaction.getTransaction
+            const transactionDetails = await klerosClient.services.transaction.getTransaction(tx._metaEvidenceID);
+            console.log("Transaction details:", transactionDetails);
             
             let status: 'pending' | 'completed' | 'disputed' | 'unknown' = 'pending';
             
-            if (details.rulings && details.rulings.length > 0) {
-              status = 'completed';
-            } else if (details.disputes && details.disputes.length > 0) {
-              status = 'disputed';
-            } else if (details.payments && details.payments.length > 0) {
-              status = 'completed';
+            // Determine status based on the transaction status
+            switch (transactionDetails.status) {
+              case 'Resolved':
+                status = 'completed';
+                break;
+              case 'DisputeCreated':
+                status = 'disputed';
+                break;
+              case 'WaitingSender':
+              case 'WaitingReceiver':
+              case 'NoDispute':
+                status = 'pending';
+                break;
+              default:
+                status = 'unknown';
+                break;
             }
             
             return {
@@ -63,8 +73,8 @@ const TransactionList = () => {
               description: metaData.description || 'No description available',
               amount: metaData.amount || '0',
               category: metaData.category || 'Uncategorized',
-              sender: metaData.sender || 'Unknown',
-              receiver: metaData.receiver || 'Unknown',
+              sender: metaData.sender || transactionDetails.sender || 'Unknown',
+              receiver: metaData.receiver || transactionDetails.receiver || 'Unknown',
               transactionHash: tx.transactionHash,
               blockNumber: tx.blockNumber,
               status
