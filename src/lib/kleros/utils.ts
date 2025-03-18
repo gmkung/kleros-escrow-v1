@@ -1,36 +1,59 @@
+import { ethers } from 'ethers';
 
-import { ethers } from "ethers";
-import { TransactionEvents } from "./types";
-
-// Utility function to determine transaction status
-export const getTransactionStatus = (events: TransactionEvents): 'pending' | 'completed' | 'disputed' | 'unknown' => {
-  if (events.rulings && events.rulings.length > 0) {
-    return 'completed';
-  }
-  
-  if (events.disputes && events.disputes.length > 0) {
-    return 'disputed';
-  }
-  
-  if (events.payments && events.payments.length > 0) {
-    return 'completed';
-  }
-  
-  return 'pending';
-};
-
-// Utility function to format addresses
-export const formatAddress = (address: string): string => {
-  if (!address || address === 'Unknown') return 'Unknown';
-  return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-};
-
-// Utility function to format ETH amounts
-export const formatAmount = (amount: string): string => {
-  if (!amount || amount === '0') return '0 ETH';
+// Function to format currency
+export const formatAmount = (amount: string | number, decimals: number = 18): string => {
   try {
-    return `${ethers.utils.formatEther(amount)} ETH`;
-  } catch (e) {
-    return `${amount} ETH`;
+    const formattedAmount = ethers.utils.formatUnits(amount.toString(), decimals);
+    return formattedAmount;
+  } catch (error) {
+    console.error("Error formatting amount:", error);
+    return '0';
   }
 };
+
+// Function to shorten an Ethereum address
+export const formatAddress = (address: string): string => {
+  if (!address) return 'Unknown';
+  return address.slice(0, 6) + '...' + address.slice(-4);
+};
+
+// Function to search transactions by title or description
+export const searchTransactions = (transactions: any[], searchTerm: string) => {
+  if (!searchTerm) {
+    return transactions;
+  }
+  
+  const lowerSearchTerm = searchTerm.toLowerCase();
+  
+  return transactions.filter(transaction => {
+    const title = transaction.title ? transaction.title.toLowerCase() : '';
+    const description = transaction.description ? transaction.description.toLowerCase() : '';
+    
+    return title.includes(lowerSearchTerm) || description.includes(lowerSearchTerm);
+  });
+};
+
+// Function to sort transactions by date
+export const sortByDate = (transactions: any[]) => {
+  return [...transactions].sort((a, b) => {
+    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+  });
+};
+
+// Get transaction status from events
+export const getTransactionStatus = (events: any) => {
+  // Check for rulings first (highest priority)
+  if (events?.rulings?.length > 0) {
+    return 'Resolved';
+  }
+  
+  // Check for disputes next
+  if (events?.disputes?.length > 0) {
+    return 'DisputeCreated';
+  }
+  
+  // Default status if no specific events found
+  return 'NoDispute';
+};
+
+// Format an Ethereum address to a shortened format

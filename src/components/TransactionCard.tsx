@@ -54,10 +54,7 @@ const TransactionCard = ({
       >
         <div className="p-5">
           <div className="flex justify-between items-start mb-3">
-            <StatusBadge 
-              status={transaction.status} 
-              events={transaction.events}
-            />
+            <StatusBadge status={transaction.status || 'unknown'} />
             <span className="text-xs text-violet-200/70">
               {formatDate(transaction.timestamp)}
             </span>

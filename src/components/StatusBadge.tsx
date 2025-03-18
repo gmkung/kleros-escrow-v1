@@ -1,11 +1,8 @@
 
 import { cn } from '../lib/utils';
-import { TransactionEvents } from '../lib/kleros/types';
-import { getTransactionStatus } from '../lib/kleros/utils';
 
 interface StatusBadgeProps {
-  status?: 'pending' | 'completed' | 'disputed' | 'unknown';
-  events?: TransactionEvents;
+  status: 'pending' | 'completed' | 'disputed' | 'unknown';
   className?: string;
 }
 
@@ -100,13 +97,8 @@ const statusConfig = {
   },
 };
 
-const StatusBadge = ({ status, events, className = '' }: StatusBadgeProps) => {
-  // If events are provided, use getTransactionStatus to determine status
-  const finalStatus = events 
-    ? getTransactionStatus(events) 
-    : (status || 'unknown');
-  
-  const config = statusConfig[finalStatus];
+const StatusBadge = ({ status, className = '' }: StatusBadgeProps) => {
+  const config = statusConfig[status];
   
   return (
     <span className={cn('status-badge', config.className, className)}>
