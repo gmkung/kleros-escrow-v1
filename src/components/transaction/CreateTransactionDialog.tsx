@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -28,7 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Download, FileJson, FilePdf } from "lucide-react";
+import { Download, FileJson, FileText } from "lucide-react";
 
 interface CreateTransactionDialogProps {
   isOpen: boolean;
@@ -65,22 +64,18 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
     try {
       setIsSubmitting(true);
 
-      // Show connecting toast
       toast({
         title: "Connecting to wallet",
         description: "Please approve the connection in your wallet",
       });
 
-      // Get client with signer
       const signerClient = await createSignerClient();
 
-      // Show preparing toast
       toast({
         title: "Preparing transaction",
         description: "Creating metadata and preparing transaction",
       });
 
-      // Create meta-evidence
       const metaEvidenceURI = await signerClient.services.ipfs.uploadMetaEvidence({
         title: data.title,
         description: data.description,
@@ -95,19 +90,14 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
         },
       });
 
-      // Show confirmation toast
       toast({
         title: "Confirm transaction",
         description: "Please confirm the transaction in your wallet",
       });
 
-      // Convert days to seconds for timeout
       const timeoutInSeconds = parseInt(data.timeoutDays) * 24 * 60 * 60;
-
-      // Convert ETH amount to wei
       const amountInWei = ethers.utils.parseEther(data.amount);
 
-      // Create the transaction
       const result = await signerClient.actions.transaction.createTransaction({
         receiver: data.receiverAddress,
         value: data.amount,
@@ -115,19 +105,13 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
         metaEvidence: metaEvidenceURI,
       });
 
-      // Show success toast
       toast({
         title: "Transaction created",
         description: `Transaction ID: ${result.transactionId}`,
       });
 
-      // Reset form
       form.reset();
-
-      // Close dialog
       onClose();
-
-      // Navigate to the newly created transaction
       navigate(`/transaction/${result.transactionId}`);
     } catch (error: any) {
       console.error("Error creating transaction:", error);
@@ -141,7 +125,6 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
     }
   };
 
-  // Generate JSON preview data based on form values
   const getMetaEvidenceJson = () => {
     const formValues = form.getValues();
     
@@ -166,7 +149,6 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
     };
   };
 
-  // Download JSON file
   const downloadJson = () => {
     const jsonData = getMetaEvidenceJson();
     const dataStr = JSON.stringify(jsonData, null, 2);
@@ -185,16 +167,13 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
     });
   };
 
-  // Download PDF file
   const downloadPdf = () => {
     const jsonData = getMetaEvidenceJson();
     const doc = new jsPDF();
     
-    // Set title
     doc.setFontSize(20);
     doc.text("Kleros Escrow Transaction", 20, 20);
     
-    // Set content
     doc.setFontSize(12);
     doc.text(`Title: ${jsonData.title || "Untitled"}`, 20, 40);
     doc.text(`Description: ${(jsonData.description || "No description").substring(0, 50)}${jsonData.description && jsonData.description.length > 50 ? "..." : ""}`, 20, 50);
@@ -203,12 +182,8 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
     doc.text(`Amount: ${jsonData.transactionDetails.value || "0 ETH"}`, 20, 80);
     doc.text(`Timeout: ${jsonData.transactionDetails.timeoutInDays || "30 days"}`, 20, 90);
     
-    // Add JSON data as text
-    doc.setFontSize(10);
-    doc.text("Full JSON Data:", 20, 110);
-    
     const jsonLines = JSON.stringify(jsonData, null, 2).split("\n");
-    let y = 120;
+    let y = 110;
     
     for (const line of jsonLines) {
       if (y > 280) {
@@ -219,7 +194,6 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
       y += 6;
     }
     
-    // Save the PDF
     doc.save(`kleros-escrow-${new Date().getTime()}.pdf`);
     
     toast({
@@ -430,7 +404,7 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
                     className="flex items-center gap-2 border-tron-light/30 hover:bg-tron-light/10"
                     onClick={downloadPdf}
                   >
-                    <FilePdf className="h-4 w-4" />
+                    <FileText className="h-4 w-4" />
                     <span>Download PDF</span>
                   </Button>
                 </div>
