@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
+import { jsPDF } from "jspdf";
 import { createSignerClient, klerosClient } from "@/lib/kleros";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Download, FileJson, FilePdf } from "lucide-react";
 
 interface CreateTransactionDialogProps {
   isOpen: boolean;
@@ -162,6 +164,68 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
         timeoutInDays: formValues.timeoutDays + " days"
       }
     };
+  };
+
+  // Download JSON file
+  const downloadJson = () => {
+    const jsonData = getMetaEvidenceJson();
+    const dataStr = JSON.stringify(jsonData, null, 2);
+    const dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `kleros-escrow-${new Date().getTime()}.json`;
+    
+    const linkElement = document.createElement("a");
+    linkElement.setAttribute("href", dataUri);
+    linkElement.setAttribute("download", exportFileDefaultName);
+    linkElement.click();
+    
+    toast({
+      title: "JSON Downloaded",
+      description: "Transaction data has been downloaded as JSON",
+    });
+  };
+
+  // Download PDF file
+  const downloadPdf = () => {
+    const jsonData = getMetaEvidenceJson();
+    const doc = new jsPDF();
+    
+    // Set title
+    doc.setFontSize(20);
+    doc.text("Kleros Escrow Transaction", 20, 20);
+    
+    // Set content
+    doc.setFontSize(12);
+    doc.text(`Title: ${jsonData.title || "Untitled"}`, 20, 40);
+    doc.text(`Description: ${(jsonData.description || "No description").substring(0, 50)}${jsonData.description && jsonData.description.length > 50 ? "..." : ""}`, 20, 50);
+    doc.text(`Category: ${jsonData.category || "Uncategorized"}`, 20, 60);
+    doc.text(`Receiver: ${jsonData.transactionDetails.receiver || "Not specified"}`, 20, 70);
+    doc.text(`Amount: ${jsonData.transactionDetails.value || "0 ETH"}`, 20, 80);
+    doc.text(`Timeout: ${jsonData.transactionDetails.timeoutInDays || "30 days"}`, 20, 90);
+    
+    // Add JSON data as text
+    doc.setFontSize(10);
+    doc.text("Full JSON Data:", 20, 110);
+    
+    const jsonLines = JSON.stringify(jsonData, null, 2).split("\n");
+    let y = 120;
+    
+    for (const line of jsonLines) {
+      if (y > 280) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(line, 20, y);
+      y += 6;
+    }
+    
+    // Save the PDF
+    doc.save(`kleros-escrow-${new Date().getTime()}.pdf`);
+    
+    toast({
+      title: "PDF Downloaded",
+      description: "Transaction data has been downloaded as PDF",
+    });
   };
 
   return (
@@ -348,6 +412,28 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
                 <p className="text-xs text-violet-300/80 mt-2">
                   This is a preview of the JSON data that will be uploaded to IPFS as meta-evidence for this transaction.
                 </p>
+                
+                <div className="flex flex-wrap gap-2 mt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex items-center gap-2 border-tron-light/30 hover:bg-tron-light/10"
+                    onClick={downloadJson}
+                  >
+                    <FileJson className="h-4 w-4" />
+                    <span>Download JSON</span>
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex items-center gap-2 border-tron-light/30 hover:bg-tron-light/10"
+                    onClick={downloadPdf}
+                  >
+                    <FilePdf className="h-4 w-4" />
+                    <span>Download PDF</span>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
             
