@@ -250,13 +250,13 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
                           <FormLabel>Description</FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="Detailed description of the agreement..."
+                              placeholder="Detail the terms of the agreement and what constitutes successful completion ..."
                               className="min-h-[120px]"
                               {...field}
                             />
                           </FormControl>
                           <FormDescription>
-                            Detail the terms of the agreement and what constitutes successful completion
+                            This will be used by the jury of Kleros to rule on any potential disputes
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
