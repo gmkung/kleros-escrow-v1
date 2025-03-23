@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import Header from '../components/Header';
+
 import TransactionList from '../components/TransactionList';
 import CreateTransactionDialog from '../components/transaction/CreateTransactionDialog';
 import { Button } from '@/components/ui/button';
@@ -11,8 +11,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header />
-      
+
+
       <main className="flex-1 py-8 md:py-16 grid-pattern">
         <div className="max-w-5xl mx-auto px-4 mb-12">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-12">
@@ -25,7 +25,7 @@ const Index = () => {
                 View transaction details, status, and timeline.
               </p>
             </div>
-            <Button 
+            <Button
               onClick={() => setIsCreateDialogOpen(true)}
               className="shrink-0 btn-tron rounded-md"
               size="lg"
@@ -35,15 +35,15 @@ const Index = () => {
             </Button>
           </div>
         </div>
-        
+
         <TransactionList />
 
-        <CreateTransactionDialog 
+        <CreateTransactionDialog
           isOpen={isCreateDialogOpen}
           onClose={() => setIsCreateDialogOpen(false)}
         />
       </main>
-      
+
       <footer className="bg-tron-dark py-8 text-white/90 border-t border-violet-500/20">
         <div className="max-w-5xl mx-auto px-4 text-center">
           <p className="text-sm text-violet-300/80">

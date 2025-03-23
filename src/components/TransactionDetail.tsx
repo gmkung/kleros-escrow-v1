@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
@@ -54,7 +53,7 @@ const TransactionDetail = () => {
         receiver: metaData.receiver || transactionDetails.receiver || 'Unknown',
         transactionHash: transactionMetaEvidence.transactionHash,
         blockNumber: transactionMetaEvidence.blockNumber,
-        status: mapTransactionStatus(transactionDetails.status || 'Unknown'),
+        status: mapTransactionStatus(transactionDetails.status, transactionDetails.amount),
         question: metaData.question || '',
         timeout: metaData.timeout || 0,
         rulingOptions: metaData.rulingOptions || { titles: [], descriptions: [] },
@@ -81,49 +80,60 @@ const TransactionDetail = () => {
   }, [id, toast]);
   
   if (loading) {
-    return <TransactionSkeleton />;
+    return (
+      <div className="container mx-auto px-4">
+        <TransactionDetailHeader />
+        <TransactionSkeleton />
+      </div>
+    );
   }
   
   if (error || !transaction) {
-    return <ErrorState error={error} />;
+    return (
+      <div className="container mx-auto px-4">
+        <TransactionDetailHeader />
+        <ErrorState error={error} />
+      </div>
+    );
   }
   
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
       <TransactionDetailHeader />
       
-      <div className="card-tron rounded-2xl overflow-hidden mb-8 shadow-lg animate-fadeIn">
-        <div className="p-6">
-          <TransactionSummary transaction={transaction} />
-          
-          {/* Add the Transaction Actions component */}
-          <TransactionActions 
-            transaction={transaction} 
-            transactionEvents={transactionEvents} 
-            onAction={loadTransactionDetails}
-          />
-        </div>
-      </div>
-      
-      <div className="card-tron rounded-2xl overflow-hidden mb-8 shadow-lg">
-        <div className="p-6">
-          {transaction.question && (
-            <ArbitrationDetails 
-              question={transaction.question} 
-              rulingOptions={transaction.rulingOptions} 
+      <div className="max-w-4xl mx-auto">
+        <div className="card-tron rounded-2xl overflow-hidden mb-8 shadow-lg animate-fadeIn">
+          <div className="p-6">
+            <TransactionSummary transaction={transaction} />
+            
+            <TransactionActions 
+              transaction={transaction} 
+              transactionEvents={transactionEvents} 
+              onAction={loadTransactionDetails}
             />
-          )}
-          
-          <ParticipatingParties aliases={transaction.aliases} />
+          </div>
         </div>
-      </div>
-      
-      <div className="card-tron rounded-2xl overflow-hidden shadow-lg">
-        <div className="p-6">
-          <TransactionTimeline 
-            transactionEvents={transactionEvents} 
-            transaction={transaction}
-          />
+        
+        <div className="card-tron rounded-2xl overflow-hidden mb-8 shadow-lg">
+          <div className="p-6">
+            {transaction.question && (
+              <ArbitrationDetails 
+                question={transaction.question} 
+                rulingOptions={transaction.rulingOptions} 
+              />
+            )}
+            
+            <ParticipatingParties aliases={transaction.aliases} />
+          </div>
+        </div>
+        
+        <div className="card-tron rounded-2xl overflow-hidden shadow-lg">
+          <div className="p-6">
+            <TransactionTimeline 
+              transactionEvents={transactionEvents} 
+              transaction={transaction}
+            />
+          </div>
         </div>
       </div>
     </div>

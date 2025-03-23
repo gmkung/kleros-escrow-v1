@@ -1,4 +1,3 @@
-
 import { ethers } from 'ethers';
 
 // Function to format currency
@@ -63,7 +62,7 @@ export const getTransactionStatus = (events: any) => {
 };
 
 // Convert backend status to UI status
-export const mapTransactionStatus = (backendStatus: string): 'pending' | 'completed' | 'disputed' | 'unknown' | 'NoDispute' => {
+export const mapTransactionStatus = (backendStatus: string, amount?: string): 'pending' | 'completed' | 'disputed' | 'unknown' => {
   switch (backendStatus) {
     case 'Resolved':
       return 'completed';
@@ -73,7 +72,8 @@ export const mapTransactionStatus = (backendStatus: string): 'pending' | 'comple
     case 'WaitingReceiver':
       return 'pending';
     case 'NoDispute':
-      return 'NoDispute'; // Changed back to 'NoDispute' to display the correct badge
+      // Check if the transaction has been paid (amount is 0)
+      return amount === "0" ? "completed" : "pending";
     default:
       return 'unknown';
   }

@@ -1,15 +1,15 @@
-
 import { useState, useEffect } from 'react';
 import { searchTransactions } from '../lib/utils';
 import SearchBar from './SearchBar';
 import { useTransactions } from '../hooks/useTransactions';
 import TransactionListSection from './transaction/TransactionListSection';
 import PaginationControls from './transaction/PaginationControls';
+import { Progress } from "@/components/ui/progress";
 
 const ITEMS_PER_PAGE = 20;
 
 const TransactionList = () => {
-  const { transactions, loading, error, loadTransactions } = useTransactions();
+  const { transactions, loading, error, loadTransactions, totalCount, processedCount, failedCount } = useTransactions();
   const [filteredTransactions, setFilteredTransactions] = useState(transactions);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,6 +44,24 @@ const TransactionList = () => {
         onSearch={setSearchTerm} 
         className="mb-8"
       />
+      
+      {loading && totalCount > 0 && (
+        <div className="mb-8">
+          <div className="flex justify-between text-sm text-violet-300/70 mb-2">
+            <span>Loading transaction details...</span>
+            <div className="flex gap-4">
+              <span>Loaded: {processedCount} / {totalCount}</span>
+              {failedCount > 0 && (
+                <span className="text-red-400">Failed: {failedCount}</span>
+              )}
+            </div>
+          </div>
+          <Progress 
+            value={(processedCount / totalCount) * 100} 
+            className="h-2 bg-violet-900/20"
+          />
+        </div>
+      )}
       
       <TransactionListSection 
         transactions={paginatedTransactions}
