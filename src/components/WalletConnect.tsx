@@ -1,5 +1,5 @@
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
-import { injected } from 'wagmi/connectors'
+import { metaMask } from 'wagmi/connectors'
 
 export function WalletConnect() {
   const { address, isConnected } = useAccount()
@@ -36,7 +36,7 @@ export function WalletConnect() {
 
   return (
     <button
-      onClick={() => connect({ connector: injected() })}
+      onClick={() => connect({ connector: metaMask() })}
       className="px-4 py-2 rounded-lg bg-violet-500 hover:bg-violet-600 text-white text-sm font-medium transition-colors"
     >
       Connect Wallet

@@ -5,7 +5,7 @@ import { createSignerClient, klerosClient, uploadEvidenceToIPFS } from '../../li
 import { useToast } from "@/hooks/use-toast";
 import EvidenceDialog, { EvidenceFormData } from './EvidenceDialog';
 import { useAccount, useConnect } from 'wagmi';
-import { injected } from 'wagmi/connectors';
+import { metaMask } from 'wagmi/connectors';
 import {
   Tooltip,
   TooltipContent,
@@ -86,7 +86,7 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
   // Check if there are already disputes
   const hasDispute = transactionEvents?.disputes?.length > 0;
 
-  // Load arbitration cost
+  // Load arbitration cost only if connected and can start dispute
   useEffect(() => {
     const loadArbitrationCost = async () => {
       try {
@@ -97,15 +97,19 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
       }
     };
     
-    if (canStartDispute && !hasDispute) {
+    if (isConnected && canStartDispute && !hasDispute) {
       loadArbitrationCost();
     }
-  }, [canStartDispute, hasDispute]);
+  }, [isConnected, canStartDispute, hasDispute]);
 
   // Helper function to check if wallet is connected
   const checkCanAct = () => {
     if (!isConnected) {
-      connect({ connector: injected() });
+      toast({
+        title: "Wallet Connection Required",
+        description: "Please connect your wallet to perform this action.",
+      });
+      connect({ connector: metaMask() });
       return false;
     }
     return true;
@@ -421,7 +425,7 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
         </CardHeader>
         <CardContent>
           <Button 
-            onClick={() => connect({ connector: injected() })}
+            onClick={() => connect({ connector: metaMask() })}
             className="w-full"
           >
             Connect Wallet
