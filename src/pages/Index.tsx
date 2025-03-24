@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 
 import TransactionList from '../components/TransactionList';
@@ -17,13 +16,19 @@ const Index = () => {
         <div className="max-w-5xl mx-auto px-4 mb-12">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-12">
             <div className="glass card-tron p-6 rounded-xl border border-violet-500/30 animate-pulse-glow">
-              <h1 className="text-3xl md:text-4xl font-bold mb-4 neon-text bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-indigo-300">
-                Kleros Escrow
+              <h1 className="font-bold mb-4 flex flex-col">
+                <span className="text-3xl md:text-4xl neon-text bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-indigo-300">
+                  Escrowly
+                </span>
               </h1>
-              <p className="text-violet-100/90 max-w-2xl">
-                Browse and search through escrow transactions processed through the Kleros arbitration protocol.
-                View transaction details, status, and timeline.
-              </p>
+              <div className="space-y-4">
+                <p className="text-violet-100/90 max-w-2xl">
+                  Create, search and manage trustless escrow transactions secured by the Kleros arbitration protocol.
+                </p>
+                <p className="text-[10px] text-violet-300/50 max-w-2xl italic">
+                  This is a community-created interface. Use at your own risk. Not officially affiliated with Kleros.
+                </p>
+              </div>
             </div>
             <Button
               onClick={() => setIsCreateDialogOpen(true)}
@@ -45,9 +50,12 @@ const Index = () => {
       </main>
 
       <footer className="bg-tron-dark py-8 text-white/90 border-t border-violet-500/20">
-        <div className="max-w-5xl mx-auto px-4 text-center">
+        <div className="max-w-5xl mx-auto px-4 text-center space-y-2">
           <p className="text-sm text-violet-300/80">
             Powered by <a href="https://kleros.io" className="text-violet-300 hover:text-violet-200 transition-colors">Kleros</a> · <span className="text-violet-300/60">v1 · Ethereum Mainnet</span>
+          </p>
+          <p className="text-xs text-violet-300/40">
+            Community-created interface. Use at your own risk. Not affiliated with Kleros.
           </p>
         </div>
       </footer>

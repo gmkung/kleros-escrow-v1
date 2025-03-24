@@ -17,8 +17,8 @@ const Header = () => {
   return (
     <header
       className={`sticky top-0 z-50 w-full py-4 px-6 transition-all duration-300 ${scrolled
-          ? 'bg-tron-dark backdrop-blur-md border-b border-violet-500/20'
-          : 'bg-transparent'
+        ? 'bg-tron-dark backdrop-blur-md border-b border-violet-500/20'
+        : 'bg-transparent'
         }`}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -26,32 +26,41 @@ const Header = () => {
           to="/"
           className="flex items-center space-x-2 no-tap-highlight"
         >
-          <div className="w-8 h-8 rounded-lg bg-violet-500 flex items-center justify-center">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M8 12L11 15L16 10"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+          <div className="w-8 h-8 flex items-center justify-center">
+            <img
+              src="/kleros-logo-symbol-fullwhite.png"
+              alt="Kleros Logo"
+              className="w-full h-full object-contain"
+            />
           </div>
-          <span className="text-lg font-semibold text-violet-100">Kleros Escrow</span>
-          <span className="text-xs px-2 py-0.5 bg-violet-500/20 rounded-full text-violet-300">v1 · Mainnet</span>
+          <div className="flex flex-col">
+            <span className="text-lg font-semibold text-violet-100">Escrowly</span>
+
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-xs px-2 py-0.5 bg-violet-500/20 rounded-full text-violet-300">v1 · Mainnet</span>
+            <a
+              href="https://etherscan.io/address/0x0d67440946949fe293b45c52efd8a9b3d51e2522"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs px-2 py-0.5 bg-violet-500/10 hover:bg-violet-500/20 rounded-full text-violet-300/70 hover:text-violet-300 transition-colors flex items-center space-x-1"
+            >
+              <span>Contract</span>
+              <svg
+                className="w-3 h-3"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+            </a>
+          </div>
         </Link>
 
         <div className="flex items-center space-x-6">
