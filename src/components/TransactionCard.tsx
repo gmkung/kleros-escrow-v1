@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { formatDate, formatTimestamp } from '../lib/utils';
@@ -71,7 +70,10 @@ const TransactionCard = ({
           <div className="flex justify-between items-center text-xs text-violet-300/70">
             <div className="flex flex-col">
               <span className="mb-1">Amount</span>
-              <span className="font-medium text-violet-100">{formatAmount(transaction.amount)}</span>
+              <span className="font-medium text-violet-100">
+                <span className="text-violet-300/70 mr-1">Ξ</span>
+                {formatAmount(transaction.amount)}
+              </span>
             </div>
             
             <div className="h-8 w-px bg-violet-500/20"></div>

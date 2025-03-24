@@ -13,6 +13,7 @@ import TransactionTimeline from './transaction/TransactionTimeline';
 import TransactionSkeleton from './transaction/TransactionSkeleton';
 import ErrorState from './transaction/ErrorState';
 import TransactionActions from './transaction/TransactionActions';
+import EvidenceList from './transaction/EvidenceList';
 
 const TransactionDetail = () => {
   const { toast } = useToast();
@@ -124,6 +125,10 @@ const TransactionDetail = () => {
             )}
             
             <ParticipatingParties aliases={transaction.aliases} />
+            
+            {transactionEvents?.evidences && transactionEvents.evidences.length > 0 && (
+              <EvidenceList evidences={transactionEvents.evidences} />
+            )}
           </div>
         </div>
         

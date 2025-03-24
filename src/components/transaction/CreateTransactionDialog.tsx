@@ -368,10 +368,18 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
                           <FormItem>
                             <FormLabel>Amount (ETH)</FormLabel>
                             <FormControl>
-                              <Input placeholder="0.1" type="text" {...field} />
+                              <div className="relative">
+                                <Input
+                                  placeholder="0.1"
+                                  type="text"
+                                  {...field}
+                                  className="pl-8"
+                                />
+                                <span className="absolute left-3 top-2.5 text-muted-foreground">Ξ</span>
+                              </div>
                             </FormControl>
                             <FormDescription>
-                              Amount to be held in escrow
+                              Amount to be held in escrow (in ETH)
                             </FormDescription>
                             <FormMessage />
                           </FormItem>

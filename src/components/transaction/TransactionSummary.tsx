@@ -52,7 +52,10 @@ const TransactionSummary = ({ transaction }: TransactionSummaryProps) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-violet-900/20 border border-violet-500/20 rounded-xl p-4">
           <h3 className="text-sm text-violet-300/70 mb-1">Amount</h3>
-          <p className="text-lg font-semibold text-violet-100">{formatAmount(transaction.amount)}</p>
+          <p className="text-lg font-semibold text-violet-100">
+            <span className="text-violet-300/70 mr-1">Ξ</span>
+            {formatAmount(transaction.amount)}
+          </p>
         </div>
         
         <div className="bg-violet-900/20 border border-violet-500/20 rounded-xl p-4">

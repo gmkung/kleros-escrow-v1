@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { createSignerClient, klerosClient, uploadEvidenceToIPFS } from '../../lib/kleros';
@@ -12,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ethers } from 'ethers';
 
 interface TransactionActionsProps {
   transaction: any;
@@ -65,11 +66,37 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
   const { connect } = useConnect();
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [evidenceDialogOpen, setEvidenceDialogOpen] = useState(false);
+  const [arbitrationCost, setArbitrationCost] = useState<string | null>(null);
 
   // Check if the current user is the sender or receiver
   const isSender = address?.toLowerCase() === transaction.sender?.toLowerCase();
   const isReceiver = address?.toLowerCase() === transaction.receiver?.toLowerCase();
   const isParticipant = isSender || isReceiver;
+
+  // Check if transaction is in a state where funds can be released
+  const canReleaseFunds = transaction.status === 'pending';
+
+  // Check if transaction is in dispute or pending
+  const canStartDispute = transaction.status === 'pending';
+
+  // Check if there are already disputes
+  const hasDispute = transactionEvents?.disputes?.length > 0;
+
+  // Load arbitration cost
+  useEffect(() => {
+    const loadArbitrationCost = async () => {
+      try {
+        const cost = await klerosClient.services.dispute.getArbitrationCost();
+        setArbitrationCost(cost);
+      } catch (error) {
+        console.error("Error fetching arbitration cost:", error);
+      }
+    };
+    
+    if (canStartDispute && !hasDispute) {
+      loadArbitrationCost();
+    }
+  }, [canStartDispute, hasDispute]);
 
   // Helper function to check if wallet is connected
   const checkCanAct = () => {
@@ -228,20 +255,18 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
       setIsLoading('paySenderFee');
       const signerClient = await createSignerClient();
 
-      // Debug: Check dispute methods
-      console.log("Dispute client methods:", signerClient.actions.dispute);
-
       // Get arbitration cost
       const arbitrationCost = await klerosClient.services.dispute.getArbitrationCost();
+      const arbitrationCostInEth = ethers.utils.formatEther(arbitrationCost);
 
       console.log("About to pay arbitration fee as sender:", {
         transactionId: transaction.id,
-        value: arbitrationCost
+        value: arbitrationCostInEth
       });
 
       const tx = await signerClient.actions.dispute.payArbitrationFeeBySender({
         transactionId: transaction.id,
-        value: arbitrationCost,
+        value: arbitrationCostInEth
       });
 
       toast({
@@ -280,15 +305,16 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
 
       // Get arbitration cost
       const arbitrationCost = await klerosClient.services.dispute.getArbitrationCost();
+      const arbitrationCostInEth = ethers.utils.formatEther(arbitrationCost);
 
       console.log("About to pay arbitration fee as receiver:", {
         transactionId: transaction.id,
-        value: arbitrationCost
+        value: arbitrationCostInEth
       });
 
       const tx = await signerClient.actions.dispute.payArbitrationFeeByReceiver({
         transactionId: transaction.id,
-        value: arbitrationCost,
+        value: arbitrationCostInEth
       });
 
       toast({
@@ -316,15 +342,6 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
       setIsLoading(null);
     }
   };
-
-  // Check if transaction is in a state where funds can be released
-  const canReleaseFunds = transaction.status === 'pending';
-
-  // Check if transaction is in dispute or pending
-  const canStartDispute = transaction.status === 'pending';
-
-  // Check if there are already disputes
-  const hasDispute = transactionEvents?.disputes?.length > 0;
 
   // Get disabled reasons for different actions
   const getReleaseFundsDisabledReason = () => {
@@ -432,27 +449,37 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
             {canStartDispute && !hasDispute && (
               <>
                 {isSender && (
-                  <ActionButton
-                    onClick={handlePayArbitrationFeeSender}
-                    disabled={isLoading !== null}
-                    disabledReason={getArbitrationFeeDisabledReason()}
-                    variant="secondary"
-                    className="w-full"
-                  >
-                    {isLoading === 'paySenderFee' ? 'Processing...' : 'Pay Arbitration Fee (as Sender)'}
-                  </ActionButton>
+                  <div className="space-y-2">
+                    <p className="text-sm text-violet-300/70">
+                      Arbitration Fee: {arbitrationCost ? `Ξ ${ethers.utils.formatEther(arbitrationCost)}` : 'Loading...'}
+                    </p>
+                    <ActionButton
+                      onClick={handlePayArbitrationFeeSender}
+                      disabled={isLoading !== null}
+                      disabledReason={getArbitrationFeeDisabledReason()}
+                      variant="secondary"
+                      className="w-full"
+                    >
+                      {isLoading === 'paySenderFee' ? 'Processing...' : 'Pay Arbitration Fee (as Sender)'}
+                    </ActionButton>
+                  </div>
                 )}
 
                 {isReceiver && (
-                  <ActionButton
-                    onClick={handlePayArbitrationFeeReceiver}
-                    disabled={isLoading !== null}
-                    disabledReason={getArbitrationFeeDisabledReason()}
-                    variant="secondary"
-                    className="w-full"
-                  >
-                    {isLoading === 'payReceiverFee' ? 'Processing...' : 'Pay Arbitration Fee (as Receiver)'}
-                  </ActionButton>
+                  <div className="space-y-2">
+                    <p className="text-sm text-violet-300/70">
+                      Arbitration Fee: {arbitrationCost ? `Ξ ${ethers.utils.formatEther(arbitrationCost)}` : 'Loading...'}
+                    </p>
+                    <ActionButton
+                      onClick={handlePayArbitrationFeeReceiver}
+                      disabled={isLoading !== null}
+                      disabledReason={getArbitrationFeeDisabledReason()}
+                      variant="secondary"
+                      className="w-full"
+                    >
+                      {isLoading === 'payReceiverFee' ? 'Processing...' : 'Pay Arbitration Fee (as Receiver)'}
+                    </ActionButton>
+                  </div>
                 )}
               </>
             )}
