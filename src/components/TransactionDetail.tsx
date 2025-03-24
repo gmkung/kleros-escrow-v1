@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { klerosClient, safeLoadIPFS } from '../lib/kleros';
 import { mapTransactionStatus } from '../lib/kleros/utils';
+import { ethers } from 'ethers';
 
 // Import refactored components
 import TransactionDetailHeader from './transaction/TransactionDetailHeader';
@@ -43,18 +44,32 @@ const TransactionDetail = () => {
       const transactionDetails = await klerosClient.services.transaction.getTransaction(id);
       const events = await klerosClient.services.event.getTransactionDetails(id);
       
+      // Ensure amount is in Wei format
+      let amountInWei;
+      try {
+        // If amount is already in Wei (big number string), use it directly
+        amountInWei = ethers.BigNumber.from(transactionDetails.amount || '0').toString();
+      } catch (e) {
+        // If amount is in ETH format, convert it to Wei
+        try {
+          amountInWei = ethers.utils.parseEther(transactionDetails.amount || '0').toString();
+        } catch (e) {
+          amountInWei = '0';
+        }
+      }
+
       setTransaction({
         id,
         timestamp: new Date(parseInt(transactionMetaEvidence.blockTimestamp) * 1000),
         title: metaData.title || 'Untitled Transaction',
         description: metaData.description || 'No description available',
-        amount: metaData.amount || transactionDetails.amount || '0',
+        amount: amountInWei, // Now always in Wei format
         category: metaData.category || 'Uncategorized',
         sender: metaData.sender || transactionDetails.sender || 'Unknown',
         receiver: metaData.receiver || transactionDetails.receiver || 'Unknown',
         transactionHash: transactionMetaEvidence.transactionHash,
         blockNumber: transactionMetaEvidence.blockNumber,
-        status: mapTransactionStatus(transactionDetails.status, transactionDetails.amount),
+        status: mapTransactionStatus(transactionDetails.status, amountInWei),
         question: metaData.question || '',
         timeout: metaData.timeout || 0,
         rulingOptions: metaData.rulingOptions || { titles: [], descriptions: [] },

@@ -122,7 +122,15 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
         description: "Creating metadata and preparing transaction",
       });
 
-      const metaEvidence = await createMetaEvidence(data, signerClient);
+      // Convert amount to Wei for metadata
+      const amountInWei = ethers.utils.parseEther(data.amount).toString();
+
+      // Create metadata with Wei amount
+      const metaEvidence = await createMetaEvidence({
+        ...data,
+        amount: amountInWei // Use Wei in metadata
+      }, signerClient);
+      
       const metaEvidenceURI = await signerClient.services.ipfs.uploadMetaEvidence(metaEvidence);
 
       toast({
@@ -131,11 +139,10 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
       });
 
       const timeoutInSeconds = parseInt(data.timeoutDays) * 24 * 60 * 60;
-      const amountInWei = ethers.utils.parseEther(data.amount);
 
       const result = await signerClient.actions.transaction.createTransaction({
         receiver: data.receiverAddress,
-        value: data.amount,
+        value: amountInWei, // Use Wei for contract call
         timeoutPayment: timeoutInSeconds,
         metaEvidence: metaEvidenceURI,
       });
@@ -360,8 +367,19 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
                         rules={{
                           required: "Amount is required",
                           pattern: {
-                            value: /^[0-9]*\.?[0-9]+$/,
+                            value: /^\d*\.?\d*$/,
                             message: "Must be a valid number"
+                          },
+                          validate: {
+                            positive: (value) => parseFloat(value) > 0 || "Amount must be greater than 0",
+                            validEth: (value) => {
+                              try {
+                                ethers.utils.parseEther(value);
+                                return true;
+                              } catch (e) {
+                                return "Invalid ETH amount";
+                              }
+                            }
                           }
                         }}
                         render={({ field }) => (
@@ -373,13 +391,25 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
                                   placeholder="0.1"
                                   type="text"
                                   {...field}
+                                  onChange={(e) => {
+                                    const value = e.target.value.trim();
+                                    // Only allow numbers and a single decimal point
+                                    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                      field.onChange(value);
+                                    }
+                                  }}
                                   className="pl-8"
                                 />
                                 <span className="absolute left-3 top-2.5 text-muted-foreground">Ξ</span>
                               </div>
                             </FormControl>
                             <FormDescription>
-                              Amount to be held in escrow (in ETH)
+                              Amount to be held in escrow (in ETH). Will be converted to Wei for the transaction.
+                              {field.value && !isNaN(parseFloat(field.value)) && (
+                                <div className="mt-1 text-xs text-violet-300/70">
+                                  ≈ {ethers.utils.parseEther(field.value || "0").toString()} Wei
+                                </div>
+                              )}
                             </FormDescription>
                             <FormMessage />
                           </FormItem>

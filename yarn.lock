@@ -4280,10 +4280,10 @@ keyvaluestorage-interface@^1.0.0:
   resolved "https://registry.yarnpkg.com/keyvaluestorage-interface/-/keyvaluestorage-interface-1.0.0.tgz#13ebdf71f5284ad54be94bd1ad9ed79adad515ff"
   integrity sha512-8t6Q3TclQ4uZynJY9IGr2+SsIGwK9JHcO6ootkHCGA0CrQCRy+VkouYNO2xicET6b9al7QKzpebNow+gkpCL8g==
 
-kleros-escrow-data-service@^0.6.1:
-  version "0.6.1"
-  resolved "https://registry.yarnpkg.com/kleros-escrow-data-service/-/kleros-escrow-data-service-0.6.1.tgz#28e501b5a813c9b57e8885fc3a068dd4cb8d6baf"
-  integrity sha512-Vyl2k1FzwU2sSPvLamVbfgn/M1ccZaw9c9iw9K5fJhJjfUp7LTwyabUy65Ijd13H8rPpFihI6pGIpmeFzoEPPw==
+kleros-escrow-data-service@^0.7.0:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/kleros-escrow-data-service/-/kleros-escrow-data-service-0.7.0.tgz#70ec6c4bed44704240e4434bdd73bd3d5000704a"
+  integrity sha512-v12nZpf7A28dmfVq+erH6VXU6fP5vUuQdftO+/TXXiDo25ca5GdhTVbCXldru1nyrnBUXZFH8AojjBV4kIgMYQ==
   dependencies:
     "@types/sinon" "^17.0.4"
     ethers "^5.7.2"

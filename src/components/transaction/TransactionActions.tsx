@@ -13,6 +13,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ethers } from 'ethers';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface TransactionActionsProps {
   transaction: any;
@@ -67,6 +69,8 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [evidenceDialogOpen, setEvidenceDialogOpen] = useState(false);
   const [arbitrationCost, setArbitrationCost] = useState<string | null>(null);
+  const [releaseAmount, setReleaseAmount] = useState<string>('');
+  const [reimburseAmount, setReimburseAmount] = useState<string>('');
 
   // Check if the current user is the sender or receiver
   const isSender = address?.toLowerCase() === transaction.sender?.toLowerCase();
@@ -107,6 +111,18 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
     return true;
   };
 
+  // Validate amount input
+  const validateAmount = (value: string): boolean => {
+    if (!value || isNaN(Number(value))) return false;
+    try {
+      const amountWei = ethers.utils.parseEther(value);
+      const transactionAmountWei = ethers.BigNumber.from(transaction.amount);
+      return amountWei.gt(0) && amountWei.lte(transactionAmountWei);
+    } catch (e) {
+      return false;
+    }
+  };
+
   // Release funds to receiver
   const handleReleaseFunds = async () => {
     if (!checkCanAct() || !isSender) return;
@@ -115,11 +131,23 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
       setIsLoading('release');
       const signerClient = await createSignerClient();
 
-      console.log("Transaction client methods:", signerClient.actions.transaction);
+      // Convert ETH amount to Wei
+      const amountWei = ethers.utils.parseEther(releaseAmount);
+      const transactionAmountWei = ethers.BigNumber.from(transaction.amount);
+      
+      // Double check the amount
+      if (amountWei.gt(transactionAmountWei)) {
+        throw new Error("Amount exceeds available balance");
+      }
+
+      console.log("About to release funds:", {
+        transactionId: transaction.id,
+        amount: amountWei.toString()
+      });
 
       const tx = await signerClient.actions.transaction.pay({
         transactionId: transaction.id,
-        amount: transaction.amount,
+        amount: amountWei.toString(),
       });
 
       toast({
@@ -131,10 +159,11 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
 
       toast({
         title: "Funds Released",
-        description: "The funds have been successfully released to the receiver",
+        description: `Successfully released ${releaseAmount} ETH to the receiver`,
         variant: "default",
       });
 
+      setReleaseAmount('');
       onAction();
     } catch (error: any) {
       console.error("Error releasing funds:", error);
@@ -156,14 +185,23 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
       setIsLoading('reimburse');
       const signerClient = await createSignerClient();
 
-      console.log("About to call reimburse with:", {
+      // Convert ETH amount to Wei
+      const amountWei = ethers.utils.parseEther(reimburseAmount);
+      const transactionAmountWei = ethers.BigNumber.from(transaction.amount);
+      
+      // Double check the amount
+      if (amountWei.gt(transactionAmountWei)) {
+        throw new Error("Amount exceeds available balance");
+      }
+
+      console.log("About to reimburse:", {
         transactionId: transaction.id,
-        amount: transaction.amount
+        amount: amountWei.toString()
       });
 
       const tx = await signerClient.actions.transaction.reimburse({
         transactionId: transaction.id,
-        amount: transaction.amount,
+        amount: amountWei.toString(),
       });
 
       toast({
@@ -175,10 +213,11 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
 
       toast({
         title: "Funds Reimbursed",
-        description: "The funds have been successfully returned to the sender",
+        description: `Successfully reimbursed ${reimburseAmount} ETH to the sender`,
         variant: "default",
       });
 
+      setReimburseAmount('');
       onAction();
     } catch (error: any) {
       console.error("Error reimbursing funds:", error);
@@ -255,18 +294,17 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
       setIsLoading('paySenderFee');
       const signerClient = await createSignerClient();
 
-      // Get arbitration cost
+      // Get arbitration cost (already in Wei)
       const arbitrationCost = await klerosClient.services.dispute.getArbitrationCost();
-      const arbitrationCostInEth = ethers.utils.formatEther(arbitrationCost);
 
       console.log("About to pay arbitration fee as sender:", {
         transactionId: transaction.id,
-        value: arbitrationCostInEth
+        value: arbitrationCost // Keep in Wei
       });
 
       const tx = await signerClient.actions.dispute.payArbitrationFeeBySender({
         transactionId: transaction.id,
-        value: arbitrationCostInEth
+        value: arbitrationCost // Keep in Wei
       });
 
       toast({
@@ -303,18 +341,17 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
       setIsLoading('payReceiverFee');
       const signerClient = await createSignerClient();
 
-      // Get arbitration cost
+      // Get arbitration cost (already in Wei)
       const arbitrationCost = await klerosClient.services.dispute.getArbitrationCost();
-      const arbitrationCostInEth = ethers.utils.formatEther(arbitrationCost);
 
       console.log("About to pay arbitration fee as receiver:", {
         transactionId: transaction.id,
-        value: arbitrationCostInEth
+        value: arbitrationCost // Keep in Wei
       });
 
       const tx = await signerClient.actions.dispute.payArbitrationFeeByReceiver({
         transactionId: transaction.id,
-        value: arbitrationCostInEth
+        value: arbitrationCost // Keep in Wei
       });
 
       toast({
@@ -425,24 +462,74 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {canReleaseFunds && !hasDispute && (
               <>
-                <ActionButton
-                  onClick={handleReleaseFunds}
-                  disabled={isLoading !== null || !isSender}
-                  disabledReason={getReleaseFundsDisabledReason()}
-                  className="w-full"
-                >
-                  {isLoading === 'release' ? 'Processing...' : 'Release Funds to Receiver'}
-                </ActionButton>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="releaseAmount">Amount to Release (ETH)</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-violet-300/70">Ξ</span>
+                      <Input
+                        id="releaseAmount"
+                        type="string"
+                        value={releaseAmount}
+                        onChange={(e) => {
+                          const value = e.target.value.trim();
+                          // Only allow numbers and a single decimal point
+                          if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                            setReleaseAmount(value);
+                          }
+                        }}
+                        className="pl-8"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <p className="text-sm text-violet-300/70">
+                      Available: Ξ {ethers.utils.formatEther(transaction.amount)}
+                    </p>
+                  </div>
+                  <ActionButton
+                    onClick={handleReleaseFunds}
+                    disabled={isLoading !== null || !isSender || !validateAmount(releaseAmount)}
+                    disabledReason={getReleaseFundsDisabledReason() || (!validateAmount(releaseAmount) && "Please enter a valid amount")}
+                    className="w-full"
+                  >
+                    {isLoading === 'release' ? 'Processing...' : 'Release Funds to Receiver'}
+                  </ActionButton>
+                </div>
 
-                <ActionButton
-                  onClick={handleReimburse}
-                  disabled={isLoading !== null || !isReceiver}
-                  disabledReason={getReimburseDisabledReason()}
-                  variant="outline"
-                  className="w-full"
-                >
-                  {isLoading === 'reimburse' ? 'Processing...' : 'Reimburse Funds to Sender'}
-                </ActionButton>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reimburseAmount">Amount to Reimburse (ETH)</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-violet-300/70">Ξ</span>
+                      <Input
+                        id="reimburseAmount"
+                        type="string"
+                        value={reimburseAmount}
+                        onChange={(e) => {
+                          const value = e.target.value.trim();
+                          // Only allow numbers and a single decimal point
+                          if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                            setReimburseAmount(value);
+                          }
+                        }}
+                        className="pl-8"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <p className="text-sm text-violet-300/70">
+                      Available: Ξ {ethers.utils.formatEther(transaction.amount)}
+                    </p>
+                  </div>
+                  <ActionButton
+                    onClick={handleReimburse}
+                    disabled={isLoading !== null || !isReceiver || !validateAmount(reimburseAmount)}
+                    disabledReason={getReimburseDisabledReason() || (!validateAmount(reimburseAmount) && "Please enter a valid amount")}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {isLoading === 'reimburse' ? 'Processing...' : 'Reimburse Funds to Sender'}
+                  </ActionButton>
+                </div>
               </>
             )}
 
@@ -451,7 +538,7 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
                 {isSender && (
                   <div className="space-y-2">
                     <p className="text-sm text-violet-300/70">
-                      Arbitration Fee: {arbitrationCost ? `Ξ ${ethers.utils.formatEther(arbitrationCost)}` : 'Loading...'}
+                      Arbitration Fee: Ξ {arbitrationCost ? ethers.utils.formatEther(arbitrationCost) : 'Loading...'}
                     </p>
                     <ActionButton
                       onClick={handlePayArbitrationFeeSender}
@@ -468,7 +555,7 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
                 {isReceiver && (
                   <div className="space-y-2">
                     <p className="text-sm text-violet-300/70">
-                      Arbitration Fee: {arbitrationCost ? `Ξ ${ethers.utils.formatEther(arbitrationCost)}` : 'Loading...'}
+                      Arbitration Fee: Ξ {arbitrationCost ? ethers.utils.formatEther(arbitrationCost) : 'Loading...'}
                     </p>
                     <ActionButton
                       onClick={handlePayArbitrationFeeReceiver}
