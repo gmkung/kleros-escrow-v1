@@ -19,7 +19,7 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <WagmiProvider config={config}>
+  <WagmiProvider config={config} reconnectOnMount={false}>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
