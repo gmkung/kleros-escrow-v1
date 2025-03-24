@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Download, FileJson, FileText } from "lucide-react";
+import { useAccount } from "wagmi";
 
 interface CreateTransactionDialogProps {
   isOpen: boolean;
@@ -41,13 +42,17 @@ interface CreateTransactionFormData {
   amount: string;
   receiverAddress: string;
   timeoutDays: string;
+  file?: File;
+  fileURI?: string;
 }
 
 const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { address: senderAddress } = useAccount();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("form");
+  const [previewJson, setPreviewJson] = useState<any>(null);
 
   const form = useForm<CreateTransactionFormData>({
     defaultValues: {
@@ -59,6 +64,47 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
       timeoutDays: "30",
     },
   });
+
+  const createMetaEvidence = async (formData: CreateTransactionFormData, signerClient: any) => {
+    const timeoutSeconds = parseInt(formData.timeoutDays) * 24 * 60 * 60;
+
+    return {
+      title: formData.title,
+      description: formData.description,
+      category: "Escrow",
+      subCategory: formData.category,
+      question: "Which party abided by terms of the contract?",
+      rulingOptions: {
+        type: "single-select",
+        titles: [
+          "Refund Sender",
+          "Pay Receiver"
+        ],
+        descriptions: [
+          "Select to return funds to the Sender",
+          "Select to release funds to the Receiver"
+        ]
+      },
+      arbitrableAddress: "0x0d67440946949fe293b45c52efd8a9b3d51e2522",
+      fileURI: formData.fileURI || "",
+      receiver: formData.receiverAddress,
+      amount: formData.amount,
+      timeout: timeoutSeconds,
+      token: {
+        name: "Ethereum",
+        ticker: "ETH",
+        symbolURI: "/static/media/eth.33901ab6.png",
+        address: null,
+        decimals: 18
+      },
+      invoice: false,
+      evidenceDisplayInterfaceURI: "/ipfs/QmfPnVdcCjApHdiCC8wAmyg5iR246JvVuQGQjQYgtF8gZU/index.html",
+      aliases: {
+        sender: senderAddress || null,
+        receiver: formData.receiverAddress
+      }
+    };
+  };
 
   const handleSubmit = async (data: CreateTransactionFormData) => {
     try {
@@ -76,19 +122,8 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
         description: "Creating metadata and preparing transaction",
       });
 
-      const metaEvidenceURI = await signerClient.services.ipfs.uploadMetaEvidence({
-        title: data.title,
-        description: data.description,
-        category: data.category,
-        question: "Should the payment be released to the receiver?",
-        rulingOptions: {
-          titles: ["Release to sender", "Release to receiver"],
-          descriptions: [
-            "Funds will be returned to the sender",
-            "Funds will be sent to the receiver",
-          ],
-        },
-      });
+      const metaEvidence = await createMetaEvidence(data, signerClient);
+      const metaEvidenceURI = await signerClient.services.ipfs.uploadMetaEvidence(metaEvidence);
 
       toast({
         title: "Confirm transaction",
@@ -125,66 +160,48 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
     }
   };
 
-  const getMetaEvidenceJson = () => {
+  const getMetaEvidenceJson = async () => {
     const formValues = form.getValues();
-    
-    return {
-      title: formValues.title,
-      description: formValues.description,
-      category: formValues.category,
-      question: "Should the payment be released to the receiver?",
-      rulingOptions: {
-        titles: ["Release to sender", "Release to receiver"],
-        descriptions: [
-          "Funds will be returned to the sender",
-          "Funds will be sent to the receiver",
-        ],
-      },
-      transactionDetails: {
-        receiver: formValues.receiverAddress,
-        value: formValues.amount + " ETH",
-        timeoutPayment: parseInt(formValues.timeoutDays) * 24 * 60 * 60 + " seconds",
-        timeoutInDays: formValues.timeoutDays + " days"
-      }
-    };
+    const signerClient = await createSignerClient();
+    return createMetaEvidence(formValues, signerClient);
   };
 
-  const downloadJson = () => {
-    const jsonData = getMetaEvidenceJson();
+  const downloadJson = async () => {
+    const jsonData = await getMetaEvidenceJson();
     const dataStr = JSON.stringify(jsonData, null, 2);
     const dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
-    
+
     const exportFileDefaultName = `kleros-escrow-${new Date().getTime()}.json`;
-    
+
     const linkElement = document.createElement("a");
     linkElement.setAttribute("href", dataUri);
     linkElement.setAttribute("download", exportFileDefaultName);
     linkElement.click();
-    
+
     toast({
       title: "JSON Downloaded",
       description: "Transaction data has been downloaded as JSON",
     });
   };
 
-  const downloadPdf = () => {
-    const jsonData = getMetaEvidenceJson();
+  const downloadPdf = async () => {
+    const jsonData = await getMetaEvidenceJson();
     const doc = new jsPDF();
-    
+
     doc.setFontSize(20);
     doc.text("Kleros Escrow Transaction", 20, 20);
-    
+
     doc.setFontSize(12);
     doc.text(`Title: ${jsonData.title || "Untitled"}`, 20, 40);
     doc.text(`Description: ${(jsonData.description || "No description").substring(0, 50)}${jsonData.description && jsonData.description.length > 50 ? "..." : ""}`, 20, 50);
     doc.text(`Category: ${jsonData.category || "Uncategorized"}`, 20, 60);
-    doc.text(`Receiver: ${jsonData.transactionDetails.receiver || "Not specified"}`, 20, 70);
-    doc.text(`Amount: ${jsonData.transactionDetails.value || "0 ETH"}`, 20, 80);
-    doc.text(`Timeout: ${jsonData.transactionDetails.timeoutInDays || "30 days"}`, 20, 90);
-    
+    doc.text(`Receiver: ${jsonData.receiver || "Not specified"}`, 20, 70);
+    doc.text(`Amount: ${jsonData.amount || "0 ETH"}`, 20, 80);
+    doc.text(`Timeout: ${jsonData.timeout / (24 * 60 * 60) || "30 days"}`, 20, 90);
+
     const jsonLines = JSON.stringify(jsonData, null, 2).split("\n");
     let y = 110;
-    
+
     for (const line of jsonLines) {
       if (y > 280) {
         doc.addPage();
@@ -193,14 +210,47 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
       doc.text(line, 20, y);
       y += 6;
     }
-    
+
     doc.save(`kleros-escrow-${new Date().getTime()}.pdf`);
-    
+
     toast({
       title: "PDF Downloaded",
       description: "Transaction data has been downloaded as PDF",
     });
   };
+
+  const handleFileUpload = async (file: File) => {
+    try {
+      const signerClient = await createSignerClient();
+      const fileBuffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(fileBuffer);
+      const cid = await signerClient.services.ipfs.uploadToIPFS(uint8Array, file.name);
+      const fileURI = `/ipfs/${cid}`;
+      form.setValue("fileURI", fileURI);
+      form.setValue("file", file);
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      toast({
+        title: "Error uploading file",
+        description: "Failed to upload file to IPFS",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Add effect to update preview when form values change
+  useEffect(() => {
+    const updatePreview = async () => {
+      try {
+        const jsonData = await getMetaEvidenceJson();
+        setPreviewJson(jsonData);
+      } catch (error) {
+        console.error("Error generating preview:", error);
+        setPreviewJson(null);
+      }
+    };
+    updatePreview();
+  }, [form.watch()]); // Watch all form values
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -217,7 +267,7 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
             <TabsTrigger value="form">Transaction Form</TabsTrigger>
             <TabsTrigger value="json">JSON Preview</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="form">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -307,7 +357,7 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
                       <FormField
                         control={form.control}
                         name="amount"
-                        rules={{ 
+                        rules={{
                           required: "Amount is required",
                           pattern: {
                             value: /^[0-9]*\.?[0-9]+$/,
@@ -331,7 +381,7 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
                       <FormField
                         control={form.control}
                         name="timeoutDays"
-                        rules={{ 
+                        rules={{
                           required: "Timeout is required",
                           pattern: {
                             value: /^[0-9]+$/,
@@ -352,6 +402,32 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
                         )}
                       />
                     </div>
+
+                    <FormField
+                      control={form.control}
+                      name="file"
+                      render={({ field: { onChange, value, ...field } }) => (
+                        <FormItem>
+                          <FormLabel>Attachment (Optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="file"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  await handleFileUpload(file);
+                                }
+                              }}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Upload any relevant files (e.g., contract, invoice, etc.)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </CardContent>
                 </Card>
 
@@ -374,35 +450,37 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
               </form>
             </Form>
           </TabsContent>
-          
+
           <TabsContent value="json">
             <Card>
               <CardContent className="pt-6">
                 <div className="bg-tron-dark/80 rounded-md p-4 border border-violet-500/30">
                   <pre className="text-violet-100 text-sm whitespace-pre-wrap overflow-auto max-h-[400px]">
-                    {JSON.stringify(getMetaEvidenceJson(), null, 2)}
+                    {previewJson ? JSON.stringify(previewJson, null, 2) : "Loading preview..."}
                   </pre>
                 </div>
                 <p className="text-xs text-violet-300/80 mt-2">
                   This is a preview of the JSON data that will be uploaded to IPFS as meta-evidence for this transaction.
                 </p>
-                
+
                 <div className="flex flex-wrap gap-2 mt-4">
                   <Button
                     type="button"
                     variant="outline"
                     className="flex items-center gap-2 border-tron-light/30 hover:bg-tron-light/10"
                     onClick={downloadJson}
+                    disabled={!previewJson}
                   >
                     <FileJson className="h-4 w-4" />
                     <span>Download JSON</span>
                   </Button>
-                  
+
                   <Button
                     type="button"
                     variant="outline"
                     className="flex items-center gap-2 border-tron-light/30 hover:bg-tron-light/10"
                     onClick={downloadPdf}
+                    disabled={!previewJson}
                   >
                     <FileText className="h-4 w-4" />
                     <span>Download PDF</span>
@@ -410,7 +488,7 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
                 </div>
               </CardContent>
             </Card>
-            
+
             <div className="flex justify-end space-x-2 mt-4">
               <Button
                 type="button"
