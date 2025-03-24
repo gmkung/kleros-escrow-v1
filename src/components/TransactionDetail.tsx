@@ -19,31 +19,31 @@ import EvidenceList from './transaction/EvidenceList';
 const TransactionDetail = () => {
   const { toast } = useToast();
   const { id } = useParams<{ id: string }>();
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [transaction, setTransaction] = useState<any>(null);
   const [transactionEvents, setTransactionEvents] = useState<any>(null);
-  
+
   const loadTransactionDetails = async () => {
     if (!id) return;
-    
+
     try {
       setLoading(true);
-      
+
       const allTx = await klerosClient.services.event.getAllMetaEvidence();
       const transactionMetaEvidence = allTx.find(tx => tx._metaEvidenceID === id);
-      
+
       if (!transactionMetaEvidence) {
         throw new Error('Transaction not found');
       }
-      
+
       const metaData = await safeLoadIPFS(transactionMetaEvidence._evidence);
-      
+
       // Updated to use services.transaction.getTransaction instead of getTransactionDetails
       const transactionDetails = await klerosClient.services.transaction.getTransaction(id);
       const events = await klerosClient.services.event.getTransactionDetails(id);
-      
+
       // Ensure amount is in Wei format
       let amountInWei;
       try {
@@ -75,7 +75,7 @@ const TransactionDetail = () => {
         rulingOptions: metaData.rulingOptions || { titles: [], descriptions: [] },
         aliases: metaData.aliases || {},
       });
-      
+
       setTransactionEvents(events);
       setError(null);
     } catch (err: any) {
@@ -90,11 +90,11 @@ const TransactionDetail = () => {
       setLoading(false);
     }
   };
-  
+
   useEffect(() => {
     loadTransactionDetails();
   }, [id, toast]);
-  
+
   if (loading) {
     return (
       <div className="container mx-auto px-4">
@@ -103,7 +103,7 @@ const TransactionDetail = () => {
       </div>
     );
   }
-  
+
   if (error || !transaction) {
     return (
       <div className="container mx-auto px-4">
@@ -112,45 +112,45 @@ const TransactionDetail = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="container mx-auto px-4 py-8">
       <TransactionDetailHeader />
-      
+
       <div className="max-w-4xl mx-auto">
         <div className="card-tron rounded-2xl overflow-hidden mb-8 shadow-lg animate-fadeIn">
           <div className="p-6">
             <TransactionSummary transaction={transaction} />
-            
-            <TransactionActions 
-              transaction={transaction} 
-              transactionEvents={transactionEvents} 
+
+            <TransactionActions
+              transaction={transaction}
+              transactionEvents={transactionEvents}
               onAction={loadTransactionDetails}
             />
           </div>
         </div>
-        
+
         <div className="card-tron rounded-2xl overflow-hidden mb-8 shadow-lg">
           <div className="p-6">
-            {transaction.question && (
-              <ArbitrationDetails 
-                question={transaction.question} 
-                rulingOptions={transaction.rulingOptions} 
+            {transaction.question && (transaction.status === 'pending' || transaction.status === 'disputed') && (
+              <ArbitrationDetails
+                question={transaction.question}
+                rulingOptions={transaction.rulingOptions}
               />
             )}
-            
+
             <ParticipatingParties aliases={transaction.aliases} />
-            
+
             {transactionEvents?.evidences && transactionEvents.evidences.length > 0 && (
               <EvidenceList evidences={transactionEvents.evidences} />
             )}
           </div>
         </div>
-        
+
         <div className="card-tron rounded-2xl overflow-hidden shadow-lg">
           <div className="p-6">
-            <TransactionTimeline 
-              transactionEvents={transactionEvents} 
+            <TransactionTimeline
+              transactionEvents={transactionEvents}
               transaction={transaction}
             />
           </div>
