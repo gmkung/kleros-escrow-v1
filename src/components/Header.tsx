@@ -93,7 +93,7 @@ const Header = () => {
             <WalletConnect />
 
             <a
-              href="https://github.com/kleros/escrow"
+              href="https://github.com/gmkung/kleros-escrow-v1/"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 text-violet-300 transition-colors"
