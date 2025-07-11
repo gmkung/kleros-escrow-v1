@@ -1,3 +1,5 @@
+import { Token } from '../tokens';
+
 export interface MetaEvidenceEvent {
   id: string;
   blockTimestamp: string;
@@ -108,6 +110,21 @@ export interface CreateTransactionParams {
   value: string;
   timeoutPayment: number;
   metaEvidence: string;
+  // Add token support
+  token?: Token;
+}
+
+export interface CreateTransactionFormData {
+  title: string;
+  description: string;
+  category: string;
+  amount: string;
+  receiverAddress: string;
+  timeoutDays: string;
+  fileURI?: string;
+  file?: File;
+  // Add token to form data
+  token?: Token;
 }
 
 export interface EvidenceSubmissionParams {

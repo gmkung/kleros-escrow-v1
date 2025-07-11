@@ -29,21 +29,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Download, FileJson, FileText } from "lucide-react";
 import { useAccount } from "wagmi";
+import { TokenSelector } from "@/components/ui/token-selector";
+import { Token, tokenService } from "@/lib/tokens";
+import { CreateTransactionFormData } from "@/lib/kleros/types";
+import { CONTRACT_ADDRESSES, erc20ABI, multipleArbitrableTransactionTokensABI } from "@/lib/kleros/contracts";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 interface CreateTransactionDialogProps {
   isOpen: boolean;
   onClose: () => void;
-}
-
-interface CreateTransactionFormData {
-  title: string;
-  description: string;
-  category: string;
-  amount: string;
-  receiverAddress: string;
-  timeoutDays: string;
-  file?: File;
-  fileURI?: string;
 }
 
 const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogProps) => {
@@ -53,20 +48,70 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("form");
   const [previewJson, setPreviewJson] = useState<any>(null);
+  const [selectedToken, setSelectedToken] = useState<Token>(tokenService.getDefaultToken());
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Add safe token amount formatter to prevent crashes
+  const safeFormatTokenAmount = (amount: string, token: Token): string => {
+    try {
+      if (!amount || amount === '' || isNaN(parseFloat(amount))) {
+        return '0';
+      }
+      return tokenService.parseTokenAmount(amount, token);
+    } catch (error) {
+      console.warn('Error parsing token amount:', error);
+      return '0';
+    }
+  };
+
+  // Add safe validation for token amounts
+  const validateTokenAmount = (amount: string, token: Token): boolean => {
+    try {
+      if (!amount || amount === '' || isNaN(parseFloat(amount))) {
+        return false;
+      }
+      const parsed = tokenService.parseTokenAmount(amount, token);
+      return parsed !== '0';
+    } catch (error) {
+      return false;
+    }
+  };
 
   const form = useForm<CreateTransactionFormData>({
+    resolver: zodResolver(z.object({
+      title: z.string().min(1, "Title is required"),
+      description: z.string().min(1, "Description is required"),
+      category: z.string().min(1, "Category is required"),
+      amount: z.string().min(1, "Amount is required").refine((val) => {
+        return validateTokenAmount(val, selectedToken);
+      }, "Please enter a valid amount"),
+      receiverAddress: z.string().min(1, "Receiver address is required").refine((val) => {
+        return ethers.utils.isAddress(val);
+      }, "Please enter a valid Ethereum address"),
+      timeoutDays: z.string().min(1, "Timeout is required").refine((val) => {
+        const days = parseInt(val);
+        return !isNaN(days) && days > 0;
+      }, "Please enter a valid number of days"),
+      // Add optional fields for file upload
+      fileURI: z.string().optional(),
+      file: z.any().optional(),
+    })),
     defaultValues: {
       title: "",
       description: "",
-      category: "Services",
+      category: "",
       amount: "",
       receiverAddress: "",
       timeoutDays: "30",
+      fileURI: "",
+      file: undefined,
     },
   });
 
   const createMetaEvidence = async (formData: CreateTransactionFormData, signerClient: any) => {
     const timeoutSeconds = parseInt(formData.timeoutDays) * 24 * 60 * 60;
+    const token = formData.token || selectedToken;
 
     return {
       title: formData.title,
@@ -85,18 +130,14 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
           "Select to release funds to the Receiver"
         ]
       },
-      arbitrableAddress: "0x0d67440946949fe293b45c52efd8a9b3d51e2522",
+      arbitrableAddress: token.isNative ? 
+        "0x0d67440946949fe293b45c52efd8a9b3d51e2522" : 
+        "0xBCf0d1AD453728F75e9cFD4358ED187598A45e6c",
       fileURI: formData.fileURI || "",
       receiver: formData.receiverAddress,
       amount: formData.amount,
       timeout: timeoutSeconds,
-      token: {
-        name: "Ethereum",
-        ticker: "ETH",
-        symbolURI: "/static/media/eth.33901ab6.png",
-        address: null,
-        decimals: 18
-      },
+      token: tokenService.getTokenMetadata(token),
       invoice: false,
       evidenceDisplayInterfaceURI: "/ipfs/QmfPnVdcCjApHdiCC8wAmyg5iR246JvVuQGQjQYgtF8gZU/index.html",
       aliases: {
@@ -109,6 +150,7 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
   const handleSubmit = async (data: CreateTransactionFormData) => {
     try {
       setIsSubmitting(true);
+      const token = data.token || selectedToken;
 
       toast({
         title: "Connecting to wallet",
@@ -122,13 +164,14 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
         description: "Creating metadata and preparing transaction",
       });
 
-      // Convert amount to Wei for metadata
-      const amountInWei = ethers.utils.parseEther(data.amount).toString();
+      // Convert amount to token's smallest unit
+      const amountInSmallestUnit = tokenService.parseTokenAmount(data.amount, token);
 
-      // Create metadata with Wei amount
+      // Create metadata with token amount
       const metaEvidence = await createMetaEvidence({
         ...data,
-        amount: amountInWei // Use Wei in metadata
+        amount: amountInSmallestUnit,
+        token: token
       }, signerClient);
       
       const metaEvidenceURI = await signerClient.services.ipfs.uploadMetaEvidence(metaEvidence);
@@ -140,12 +183,145 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
 
       const timeoutInSeconds = parseInt(data.timeoutDays) * 24 * 60 * 60;
 
-      const result = await signerClient.actions.transaction.createTransaction({
-        receiver: data.receiverAddress,
-        value: amountInWei, // Use Wei for contract call
-        timeoutPayment: timeoutInSeconds,
-        metaEvidence: metaEvidenceURI,
-      });
+      let result;
+      if (token.isNative) {
+        // ETH transaction
+        result = await signerClient.actions.transaction.createTransaction({
+          receiver: data.receiverAddress,
+          value: amountInSmallestUnit,
+          timeoutPayment: timeoutInSeconds,
+          metaEvidence: metaEvidenceURI,
+        });
+      } else {
+        // ERC20 token transaction - Direct contract interaction
+        toast({
+          title: "Token approval required",
+          description: "Please approve the token spending in your wallet",
+        });
+
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        
+        // Get contract addresses
+        const tokenContractAddress = CONTRACT_ADDRESSES.MULTIPLE_ARBITRABLE_TRANSACTION_TOKENS;
+        const tokenAddress = token.address;
+        
+        console.log("Debug info:", {
+          tokenContractAddress,
+          tokenAddress,
+          senderAddress,
+          amount: amountInSmallestUnit,
+          token: token.symbol
+        });
+        
+        // Create contract instances
+        const tokenContract = new ethers.Contract(tokenAddress, erc20ABI, signer);
+        const escrowContract = new ethers.Contract(tokenContractAddress, multipleArbitrableTransactionTokensABI, signer);
+        
+        // Check if contracts exist
+        try {
+          const tokenName = await tokenContract.name();
+          console.log("Token contract found:", tokenName);
+        } catch (error) {
+          throw new Error(`Token contract not found at ${tokenAddress}. Please check the token address.`);
+        }
+        
+        try {
+          const escrowCode = await provider.getCode(tokenContractAddress);
+          if (escrowCode === '0x') {
+            throw new Error(`Escrow contract not found at ${tokenContractAddress}. Please check the contract address.`);
+          }
+          console.log("Escrow contract found");
+        } catch (error) {
+          throw new Error(`Failed to verify escrow contract: ${error.message}`);
+        }
+        
+        // Check user's token balance
+        const userBalance = await tokenContract.balanceOf(senderAddress);
+        const requiredAmount = ethers.BigNumber.from(amountInSmallestUnit);
+        
+        console.log("Balance check:", {
+          userBalance: userBalance.toString(),
+          requiredAmount: requiredAmount.toString(),
+          hasEnough: userBalance.gte(requiredAmount)
+        });
+        
+        if (userBalance.lt(requiredAmount)) {
+          throw new Error(`Insufficient ${token.symbol} balance. You have ${tokenService.formatFromSmallestUnit(userBalance.toString(), token)} ${token.symbol}, but need ${tokenService.formatFromSmallestUnit(amountInSmallestUnit, token)} ${token.symbol}.`);
+        }
+        
+        // Check current allowance
+        const currentAllowance = await tokenContract.allowance(senderAddress, tokenContractAddress);
+        
+        console.log("Allowance check:", {
+          currentAllowance: currentAllowance.toString(),
+          requiredAmount: requiredAmount.toString(),
+          needsApproval: currentAllowance.lt(requiredAmount)
+        });
+        
+        // Approve tokens if needed
+        if (currentAllowance.lt(requiredAmount)) {
+          toast({
+            title: "Approving tokens",
+            description: `Approving ${tokenService.formatFromSmallestUnit(amountInSmallestUnit, token)} ${token.symbol}`,
+          });
+          
+          const approveTx = await tokenContract.approve(tokenContractAddress, requiredAmount);
+          console.log("Approval transaction:", approveTx.hash);
+          await approveTx.wait();
+          
+          toast({
+            title: "Tokens approved",
+            description: "Token spending approved successfully",
+          });
+        }
+        
+        toast({
+          title: "Creating transaction",
+          description: "Creating escrow transaction with tokens",
+        });
+        
+        console.log("Creating transaction with params:", {
+          amount: requiredAmount.toString(),
+          token: tokenAddress,
+          timeout: timeoutInSeconds,
+          receiver: data.receiverAddress,
+          metaEvidence: metaEvidenceURI
+        });
+        
+        // Create the escrow transaction with explicit gas limit
+        const tx = await escrowContract.createTransaction(
+          requiredAmount,
+          tokenAddress,
+          timeoutInSeconds,
+          data.receiverAddress,
+          metaEvidenceURI,
+          {
+            gasLimit: 500000 // Add explicit gas limit
+          }
+        );
+        
+        console.log("Transaction submitted:", tx.hash);
+        const receipt = await tx.wait();
+        console.log("Transaction confirmed:", receipt);
+        
+        // Extract transaction ID from events
+        const transactionCreatedEvent = receipt.events?.find(
+          (event: any) => event.event === 'TransactionCreated'
+        );
+        
+        const transactionId = transactionCreatedEvent?.args?._transactionID?.toString();
+        
+        if (!transactionId) {
+          console.log("All events:", receipt.events);
+          throw new Error("Failed to extract transaction ID from events");
+        }
+        
+        result = {
+          transactionId: transactionId,
+          transactionHash: receipt.transactionHash
+        };
+      }
 
       toast({
         title: "Transaction created",
@@ -153,6 +329,7 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
       });
 
       form.reset();
+      setSelectedToken(tokenService.getDefaultToken());
       onClose();
       navigate(`/transaction/${result.transactionId}`);
     } catch (error: any) {
@@ -167,28 +344,52 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
     }
   };
 
-  const getMetaEvidenceJson = async () => {
-    const formValues = form.getValues();
-    const signerClient = await createSignerClient();
-    return createMetaEvidence(formValues, signerClient);
+  const validateAmount = (value: string): string | undefined => {
+    if (!value) return "Amount is required";
+    
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue <= 0) {
+      return "Amount must be a positive number";
+    }
+
+    // Check if amount has too many decimal places for the token
+    const decimalPlaces = (value.split('.')[1] || '').length;
+    if (decimalPlaces > selectedToken.decimals) {
+      return `Amount can have at most ${selectedToken.decimals} decimal places for ${selectedToken.symbol}`;
+    }
+
+    return undefined;
   };
 
-  const downloadJson = async () => {
-    const jsonData = await getMetaEvidenceJson();
-    const dataStr = JSON.stringify(jsonData, null, 2);
-    const dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+  const getMetaEvidenceJson = async () => {
+    const formData = form.getValues();
+    const token = formData.token || selectedToken;
+    
+    if (!formData.amount || !token) {
+      return { 
+        title: formData.title || "Untitled",
+        description: formData.description || "No description",
+        category: "Escrow",
+        token: tokenService.getTokenMetadata(token)
+      };
+    }
 
-    const exportFileDefaultName = `kleros-escrow-${new Date().getTime()}.json`;
-
-    const linkElement = document.createElement("a");
-    linkElement.setAttribute("href", dataUri);
-    linkElement.setAttribute("download", exportFileDefaultName);
-    linkElement.click();
-
-    toast({
-      title: "JSON Downloaded",
-      description: "Transaction data has been downloaded as JSON",
-    });
+    try {
+      const amountInSmallestUnit = tokenService.parseTokenAmount(formData.amount, token);
+      return await createMetaEvidence({
+        ...formData,
+        amount: amountInSmallestUnit,
+        token: token
+      }, null);
+    } catch (error) {
+      console.error("Error generating preview:", error);
+      return { 
+        title: formData.title || "Untitled",
+        description: formData.description || "No description",
+        category: "Escrow",
+        token: tokenService.getTokenMetadata(token)
+      };
+    }
   };
 
   const downloadPdf = async () => {
@@ -202,12 +403,18 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
     doc.text(`Title: ${jsonData.title || "Untitled"}`, 20, 40);
     doc.text(`Description: ${(jsonData.description || "No description").substring(0, 50)}${jsonData.description && jsonData.description.length > 50 ? "..." : ""}`, 20, 50);
     doc.text(`Category: ${jsonData.category || "Uncategorized"}`, 20, 60);
-    doc.text(`Receiver: ${jsonData.receiver || "Not specified"}`, 20, 70);
-    doc.text(`Amount: ${jsonData.amount || "0 ETH"}`, 20, 80);
-    doc.text(`Timeout: ${jsonData.timeout / (24 * 60 * 60) || "30 days"}`, 20, 90);
+    doc.text(`Receiver: ${(jsonData as any).receiver || "Not specified"}`, 20, 70);
+    doc.text(`Amount: ${(jsonData as any).amount || "0"} ${jsonData.token?.ticker || ""}`, 20, 80);
+    doc.text(`Timeout: ${(jsonData as any).timeout ? (jsonData as any).timeout / (24 * 60 * 60) : "30"} days`, 20, 90);
+    
+    let currentY = 100;
+    if ((jsonData as any).fileURI) {
+      doc.text(`Attached File: ${(jsonData as any).fileURI}`, 20, currentY);
+      currentY += 10;
+    }
 
     const jsonLines = JSON.stringify(jsonData, null, 2).split("\n");
-    let y = 110;
+    let y = currentY + 10;
 
     for (const line of jsonLines) {
       if (y > 280) {
@@ -228,24 +435,61 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
 
   const handleFileUpload = async (file: File) => {
     try {
+      setIsUploading(true);
+      
+      toast({
+        title: "Uploading file",
+        description: "Uploading file to IPFS...",
+      });
+
       const signerClient = await createSignerClient();
       const fileBuffer = await file.arrayBuffer();
       const uint8Array = new Uint8Array(fileBuffer);
       const cid = await signerClient.services.ipfs.uploadToIPFS(uint8Array, file.name);
       const fileURI = `/ipfs/${cid}`;
+      
+      // Update form values
       form.setValue("fileURI", fileURI);
       form.setValue("file", file);
+      setUploadedFile(file);
+      
+      toast({
+        title: "File uploaded successfully",
+        description: `File uploaded to IPFS: ${fileURI}`,
+      });
+      
     } catch (error) {
       console.error("Error uploading file:", error);
+      
+      // Clear any partial upload data
+      form.setValue("fileURI", "");
+      form.setValue("file", undefined);
+      setUploadedFile(null);
+      
       toast({
         title: "Error uploading file",
-        description: "Failed to upload file to IPFS",
+        description: "Failed to upload file to IPFS. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  // Add effect to update preview when form values change
+  // Update form token value when selectedToken changes
+  useEffect(() => {
+    form.setValue("token", selectedToken);
+  }, [selectedToken, form]);
+
+  // Watch specific form fields and update preview when they change
+  const title = form.watch("title");
+  const description = form.watch("description");
+  const category = form.watch("category");
+  const amount = form.watch("amount");
+  const receiverAddress = form.watch("receiverAddress");
+  const timeoutDays = form.watch("timeoutDays");
+  const fileURI = form.watch("fileURI");
+
   useEffect(() => {
     const updatePreview = async () => {
       try {
@@ -257,7 +501,7 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
       }
     };
     updatePreview();
-  }, [form.watch()]); // Watch all form values
+  }, [title, description, category, amount, receiverAddress, timeoutDays, fileURI, selectedToken]); // Added fileURI to dependencies
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -269,219 +513,210 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="form" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="form">Transaction Form</TabsTrigger>
-            <TabsTrigger value="json">JSON Preview</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="form">Form</TabsTrigger>
+            <TabsTrigger value="preview">Preview</TabsTrigger>
+            <TabsTrigger value="json">JSON</TabsTrigger>
           </TabsList>
 
           <TabsContent value="form">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                <Card>
-                  <CardContent className="pt-6 space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="title"
-                      rules={{ required: "Title is required" }}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Title</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Project payment" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            A short title describing this transaction
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    rules={{ required: "Title is required" }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Payment for services" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      rules={{ required: "Description is required" }}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Detail the terms of the agreement and what constitutes successful completion ..."
-                              className="min-h-[120px]"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            This will be used by the jury of Kleros to rule on any potential disputes
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Services" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-                <Card>
-                  <CardContent className="pt-6 space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="category"
-                      rules={{ required: "Category is required" }}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Category</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Services" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Category of transaction (e.g., Services, Goods, Digital Assets)
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  rules={{ required: "Description is required" }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Describe the terms of the agreement..."
+                          className="min-h-[100px]"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="receiverAddress"
-                      rules={{ required: "Receiver address is required" }}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Receiver Ethereum Address</FormLabel>
-                          <FormControl>
-                            <Input placeholder="0x..." {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            The Ethereum address that will receive the payment if completed successfully
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="receiverAddress"
+                  rules={{ 
+                    required: "Receiver address is required",
+                    pattern: {
+                      value: /^0x[a-fA-F0-9]{40}$/,
+                      message: "Invalid Ethereum address"
+                    }
+                  }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Receiver Address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="0x..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="amount"
-                        rules={{
-                          required: "Amount is required",
-                          pattern: {
-                            value: /^\d*\.?\d*$/,
-                            message: "Must be a valid number"
-                          },
-                          validate: {
-                            positive: (value) => parseFloat(value) > 0 || "Amount must be greater than 0",
-                            validEth: (value) => {
-                              try {
-                                ethers.utils.parseEther(value);
-                                return true;
-                              } catch (e) {
-                                return "Invalid ETH amount";
-                              }
-                            }
-                          }
-                        }}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Amount (ETH)</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Input
-                                  placeholder="0.1"
-                                  type="text"
-                                  {...field}
-                                  onChange={(e) => {
-                                    const value = e.target.value.trim();
-                                    // Only allow numbers and a single decimal point
-                                    if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                                      field.onChange(value);
-                                    }
-                                  }}
-                                  className="pl-8"
-                                />
-                                <span className="absolute left-3 top-2.5 text-muted-foreground">Ξ</span>
-                              </div>
-                            </FormControl>
-                            <FormDescription>
-                              Amount to be held in escrow (in ETH). Will be converted to Wei for the transaction.
-                              {field.value && !isNaN(parseFloat(field.value)) && (
-                                <div className="mt-1 text-xs text-violet-300/70">
-                                  ≈ {ethers.utils.parseEther(field.value || "0").toString()} Wei
-                                </div>
-                              )}
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormItem>
+                    <FormLabel>Token</FormLabel>
+                    <FormControl>
+                      <TokenSelector
+                        value={selectedToken}
+                        onSelect={setSelectedToken}
                       />
+                    </FormControl>
+                    <FormDescription>
+                      Select the token for this escrow transaction
+                    </FormDescription>
+                  </FormItem>
 
-                      <FormField
-                        control={form.control}
-                        name="timeoutDays"
-                        rules={{
-                          required: "Timeout is required",
-                          pattern: {
-                            value: /^[0-9]+$/,
-                            message: "Must be a valid number"
-                          }
-                        }}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Timeout (days)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="30" type="text" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                              Days until timeout can be executed
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="file"
-                      render={({ field: { onChange, value, ...field } }) => (
-                        <FormItem>
-                          <FormLabel>Attachment (Optional)</FormLabel>
-                          <FormControl>
+                  <FormField
+                    control={form.control}
+                    name="amount"
+                    rules={{ 
+                      required: "Amount is required",
+                      validate: validateAmount
+                    }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Amount ({selectedToken.symbol})</FormLabel>
+                        <FormControl>
+                          <div className="relative">
                             <Input
-                              type="file"
-                              onChange={async (e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  await handleFileUpload(file);
+                              placeholder="0.1"
+                              type="text"
+                              {...field}
+                              onChange={(e) => {
+                                const value = e.target.value.trim();
+                                // Allow numbers and decimal point
+                                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                                  field.onChange(value);
                                 }
                               }}
-                              {...field}
+                              className="pr-16"
                             />
-                          </FormControl>
-                          <FormDescription>
-                            Upload any relevant files (e.g., contract, invoice, etc.)
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                            <span className="absolute right-3 top-2.5 text-muted-foreground text-sm">
+                              {selectedToken.symbol}
+                            </span>
+                          </div>
+                        </FormControl>
+                        <FormDescription>
+                          Amount to be held in escrow (in {selectedToken.symbol})
+                          {field.value && !isNaN(parseFloat(field.value)) && (
+                            <div className="mt-1 text-xs text-violet-300/70">
+                              ≈ {safeFormatTokenAmount(field.value || "0", selectedToken)} {selectedToken.symbol} (smallest unit)
+                            </div>
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="timeoutDays"
+                  rules={{ 
+                    required: "Timeout is required",
+                    min: { value: 1, message: "Timeout must be at least 1 day" }
+                  }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Timeout (Days)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          placeholder="30"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Number of days before the transaction can be automatically executed
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Supporting Documents (Optional)
+                  </label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                    <input
+                      type="file"
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) {
+                          setIsUploading(true);
+                          handleFileUpload(e.target.files[0]).finally(() => {
+                            setIsUploading(false);
+                          });
+                        }
+                      }}
+                      className="hidden"
+                      id="file-upload"
+                      disabled={isUploading}
                     />
-                  </CardContent>
-                </Card>
+                    <label
+                      htmlFor="file-upload"
+                      className={`cursor-pointer text-sm ${isUploading ? 'text-gray-400' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                      {isUploading ? "Uploading to IPFS..." : "Click to upload a file or drag and drop"}
+                    </label>
+                    {form.watch("file") && form.watch("fileURI") && (
+                      <div className="text-sm text-green-600 mt-2 space-y-1">
+                        <p>✓ File uploaded: {form.watch("file")?.name}</p>
+                        <p className="text-xs text-gray-500">IPFS URI: {form.watch("fileURI")}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={onClose}
-                    disabled={isSubmitting}
-                  >
+                  <Button type="button" variant="outline" onClick={onClose}>
                     Cancel
                   </Button>
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                  >
+                  <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? "Creating..." : "Create Transaction"}
                   </Button>
                 </DialogFooter>
@@ -489,60 +724,76 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
             </Form>
           </TabsContent>
 
+          <TabsContent value="preview">
+            <Card>
+              <CardContent className="pt-6">
+                {previewJson ? (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-lg">{previewJson.title}</h3>
+                      <p className="text-sm text-muted-foreground">{previewJson.subCategory}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-2">Description</h4>
+                      <p className="text-sm">{previewJson.description}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="font-medium">Amount</h4>
+                        <p className="text-sm">
+                          {(previewJson as any).amount || "0"} {previewJson.token?.ticker || ""}
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="font-medium">Timeout</h4>
+                        <p className="text-sm">
+                          {(previewJson as any).timeout ? (previewJson as any).timeout / (24 * 60 * 60) : 0} days
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-medium">Token</h4>
+                      <p className="text-sm">{previewJson.token?.name || "Unknown"} ({previewJson.token?.ticker || ""})</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium">Receiver</h4>
+                      <p className="text-sm">{(previewJson as any).receiver || "Not specified"}</p>
+                    </div>
+                    {(previewJson as any).fileURI && (
+                      <div>
+                        <h4 className="font-medium">Attached File</h4>
+                        <p className="text-sm text-blue-600 break-all">{(previewJson as any).fileURI}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          File has been uploaded to IPFS and will be included in the transaction metadata
+                        </p>
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={downloadPdf}>
+                        <Download className="w-4 h-4 mr-2" />
+                        Download PDF
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">Fill out the form to see preview</p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="json">
             <Card>
               <CardContent className="pt-6">
-                <div className="bg-tron-dark/80 rounded-md p-4 border border-violet-500/30">
-                  <pre className="text-violet-100 text-sm whitespace-pre-wrap overflow-auto max-h-[400px]">
-                    {previewJson ? JSON.stringify(previewJson, null, 2) : "Loading preview..."}
-                  </pre>
+                <div className="flex items-center gap-2 mb-4">
+                  <FileJson className="w-4 h-4" />
+                  <span className="text-sm font-medium">MetaEvidence JSON</span>
                 </div>
-                <p className="text-xs text-violet-300/80 mt-2">
-                  This is a preview of the JSON data that will be uploaded to IPFS as meta-evidence for this transaction.
-                </p>
-
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex items-center gap-2 border-tron-light/30 hover:bg-tron-light/10"
-                    onClick={downloadJson}
-                    disabled={!previewJson}
-                  >
-                    <FileJson className="h-4 w-4" />
-                    <span>Download JSON</span>
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex items-center gap-2 border-tron-light/30 hover:bg-tron-light/10"
-                    onClick={downloadPdf}
-                    disabled={!previewJson}
-                  >
-                    <FileText className="h-4 w-4" />
-                    <span>Download PDF</span>
-                  </Button>
-                </div>
+                <pre className="bg-muted p-4 rounded-lg text-xs overflow-auto max-h-[400px]">
+                  {previewJson ? JSON.stringify(previewJson, null, 2) : "Fill out the form to see JSON"}
+                </pre>
               </CardContent>
             </Card>
-
-            <div className="flex justify-end space-x-2 mt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => setActiveTab("form")}
-                disabled={isSubmitting}
-              >
-                Back to Form
-              </Button>
-            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>
