@@ -201,15 +201,9 @@ export const klerosConfig = {
     url: "https://ethereum.publicnode.com",
     networkId: 1, // Ethereum mainnet
   },
-  // Configuration for different contract types
-  contracts: {
-    eth: {
-      address: CONTRACT_ADDRESSES.MULTIPLE_ARBITRABLE_TRANSACTION,
-      abi: multipleArbitrableTransactionABI
-    },
-    tokens: {
-      address: CONTRACT_ADDRESSES.MULTIPLE_ARBITRABLE_TRANSACTION_TOKENS,
-      abi: multipleArbitrableTransactionTokensABI
-    }
-  }
+  multipleArbitrableTransactionEth: {
+    address: CONTRACT_ADDRESSES.MULTIPLE_ARBITRABLE_TRANSACTION,
+  },
+  ipfsGateway: "https://cdn.kleros.link",
+  subgraphUrl: "https://api.studio.thegraph.com/query/74379/kleros-escrow-v1/version/latest",
 };

@@ -31,7 +31,7 @@ const TransactionDetail = () => {
     try {
       setLoading(true);
 
-      const allTx = await klerosClient.services.event.getAllMetaEvidence();
+      const allTx = await klerosClient.getAllEthMetaEvidence();
       const transactionMetaEvidence = allTx.find(tx => tx._metaEvidenceID === id);
 
       if (!transactionMetaEvidence) {
@@ -40,9 +40,9 @@ const TransactionDetail = () => {
 
       const metaData = await safeLoadIPFS(transactionMetaEvidence._evidence);
 
-      // Updated to use services.transaction.getTransaction instead of getTransactionDetails
-      const transactionDetails = await klerosClient.services.transaction.getTransaction(id);
-      const events = await klerosClient.services.event.getTransactionDetails(id);
+      // Updated to use direct ETH client methods
+      const transactionDetails = await klerosClient.getEthTransaction(id);
+      const events = await klerosClient.getEthTransactionDetails(id);
 
       // Ensure amount is in Wei format
       let amountInWei;

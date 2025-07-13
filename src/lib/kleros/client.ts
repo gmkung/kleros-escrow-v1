@@ -1,4 +1,4 @@
-import { createKlerosEscrowClient } from "kleros-escrow-data-service";
+import { createKlerosEscrowEthClient } from "kleros-escrow-data-service";
 import { ethers } from "ethers";
 import { klerosConfig } from './contracts';
 
@@ -10,7 +10,7 @@ declare global {
 }
 
 // Create a read-only client
-export const klerosClient = createKlerosEscrowClient(klerosConfig);
+export const klerosClient = createKlerosEscrowEthClient(klerosConfig);
 
 // This function creates a connected client with a signer when needed
 export const createSignerClient = async () => {
@@ -36,7 +36,7 @@ export const createSignerClient = async () => {
     const signer = provider.getSigner();
     
     // Create the client with signer and verify that all methods exist
-    const client = createKlerosEscrowClient(klerosConfig, signer);
+    const client = createKlerosEscrowEthClient(klerosConfig, signer);
     
     // Debug: Log the structure of the client to help diagnose issues
     console.log("Client structure:", {

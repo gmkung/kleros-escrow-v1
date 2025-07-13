@@ -26,7 +26,7 @@ export const useTransactions = () => {
       console.log("Fetching transactions...");
 
       // Fetch all transactions from the Kleros subgraph
-      const allTx = await klerosClient.services.event.getAllMetaEvidence();
+      const allTx = await klerosClient.getAllEthMetaEvidence();
       console.log("Received transactions:", allTx);
       
       // Filter out any null or undefined transactions
@@ -46,7 +46,7 @@ export const useTransactions = () => {
             // Run metadata and transaction detail fetching in parallel
             const [metaData, transactionDetails] = await Promise.all([
               safeLoadIPFS(tx._evidence),
-              klerosClient.services.transaction.getTransaction(tx._metaEvidenceID)
+              klerosClient.getEthTransaction(tx._metaEvidenceID)
             ]);
 
             console.log("Transaction details:", transactionDetails);
