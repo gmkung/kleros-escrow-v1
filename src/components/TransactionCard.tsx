@@ -60,7 +60,7 @@ const TransactionCard = ({
                   ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
                   : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
               }`}>
-                {transaction.type === 'TOKEN' ? 'TOKEN' : 'ETH'}
+                {transaction.type === 'TOKEN' ? 'ERC20' : 'ETH'}
               </span>
             </div>
             <span className="text-xs text-violet-200/70">
