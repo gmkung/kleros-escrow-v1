@@ -53,9 +53,16 @@ const TransactionSummary = ({ transaction }: TransactionSummaryProps) => {
         <div className="bg-violet-900/20 border border-violet-500/20 rounded-xl p-4">
           <h3 className="text-sm text-violet-300/70 mb-1">Remaining balance</h3>
           <p className="text-lg font-semibold text-violet-100">
-            <span className="text-violet-300/70 mr-1">Ξ</span>
-            {formatAmount(transaction.amount)}
+            <span className="text-violet-300/70 mr-1">
+              {transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'Ξ'}
+            </span>
+            {formatAmount(transaction.amount, transaction.tokenInfo?.decimals || 18)}
           </p>
+          {transaction.type === 'TOKEN' && transaction.tokenInfo && (
+            <p className="text-xs text-violet-300/60 mt-1">
+              {transaction.tokenInfo.name}
+            </p>
+          )}
         </div>
         
         <div className="bg-violet-900/20 border border-violet-500/20 rounded-xl p-4">

@@ -207,3 +207,15 @@ export const klerosConfig = {
   ipfsGateway: "https://cdn.kleros.link",
   subgraphUrl: "https://api.studio.thegraph.com/query/74379/kleros-escrow-v1/version/latest",
 };
+
+export const tokenConfig = {
+  provider: {
+    url: "https://ethereum.publicnode.com",
+    networkId: 1, // Ethereum mainnet
+  },
+  multipleArbitrableTransactionToken: {
+    address: CONTRACT_ADDRESSES.MULTIPLE_ARBITRABLE_TRANSACTION_TOKENS,
+  },
+  ipfsGateway: "https://cdn.kleros.link",
+  subgraphUrl: "https://api.studio.thegraph.com/query/74379/kleros-escrow-v1-erc20-subgraph/version/latest",
+};

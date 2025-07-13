@@ -164,17 +164,17 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
         description: "Creating metadata and preparing transaction",
       });
 
-      // Convert amount to token's smallest unit
+      // Keep amount in human-readable format for metadata
       const amountInSmallestUnit = tokenService.parseTokenAmount(data.amount, token);
 
-      // Create metadata with token amount
+      // Create metadata with human-readable amount
       const metaEvidence = await createMetaEvidence({
         ...data,
-        amount: amountInSmallestUnit,
+        amount: data.amount, // Store human-readable amount in metadata
         token: token
       }, signerClient);
       
-      const metaEvidenceURI = await signerClient.services.ipfs.uploadMetaEvidence(metaEvidence);
+      const metaEvidenceURI = await signerClient.ethClient.services.ipfs.uploadMetaEvidence(metaEvidence);
 
       toast({
         title: "Confirm transaction",
@@ -186,7 +186,7 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
       let result;
       if (token.isNative) {
         // ETH transaction
-        result = await signerClient.actions.transaction.createTransaction({
+        result = await signerClient.ethClient.actions.transaction.createTransaction({
           receiver: data.receiverAddress,
           value: amountInSmallestUnit,
           timeoutPayment: timeoutInSeconds,
@@ -331,7 +331,10 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
       form.reset();
       setSelectedToken(tokenService.getDefaultToken());
       onClose();
-      navigate(`/transaction/${result.transactionId}`);
+      
+      // Navigate to the appropriate transaction type URL
+      const transactionType = token.isNative ? 'eth' : 'token';
+      navigate(`/transaction/${transactionType}/${result.transactionId}`);
     } catch (error: any) {
       console.error("Error creating transaction:", error);
       toast({
@@ -445,7 +448,7 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
       const signerClient = await createSignerClient();
       const fileBuffer = await file.arrayBuffer();
       const uint8Array = new Uint8Array(fileBuffer);
-      const cid = await signerClient.services.ipfs.uploadToIPFS(uint8Array, file.name);
+      const cid = await signerClient.ethClient.services.ipfs.uploadToIPFS(uint8Array, file.name);
       const fileURI = `/ipfs/${cid}`;
       
       // Update form values

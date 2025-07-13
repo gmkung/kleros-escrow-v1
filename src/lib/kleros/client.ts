@@ -1,6 +1,6 @@
-import { createKlerosEscrowEthClient } from "kleros-escrow-data-service";
+import { createKlerosEscrowEthClient, createKlerosEscrowTokenClient } from "kleros-escrow-data-service";
 import { ethers } from "ethers";
-import { klerosConfig } from './contracts';
+import { klerosConfig, tokenConfig } from './contracts';
 
 // This is needed to add ethereum property to the Window interface
 declare global {
@@ -9,8 +9,9 @@ declare global {
   }
 }
 
-// Create a read-only client
+// Create read-only clients
 export const klerosClient = createKlerosEscrowEthClient(klerosConfig);
+export const tokenClient = createKlerosEscrowTokenClient(tokenConfig);
 
 // This function creates a connected client with a signer when needed
 export const createSignerClient = async () => {
@@ -35,28 +36,29 @@ export const createSignerClient = async () => {
     await provider.send("eth_requestAccounts", []);
     const signer = provider.getSigner();
     
-    // Create the client with signer and verify that all methods exist
-    const client = createKlerosEscrowEthClient(klerosConfig, signer);
+    // Create both clients with signer
+    const ethClient = createKlerosEscrowEthClient(klerosConfig, signer);
+    const tokenClient = createKlerosEscrowTokenClient(tokenConfig, signer);
     
-    // Debug: Log the structure of the client to help diagnose issues
-    console.log("Client structure:", {
-      actions: Object.keys(client.actions || {}),
-      transaction: Object.keys(client.actions?.transaction || {}),
-      dispute: Object.keys(client.actions?.dispute || {}),
-      evidence: Object.keys(client.actions?.evidence || {})
+    // Debug: Log the structure of the clients to help diagnose issues
+    console.log("ETH Client structure:", {
+      actions: Object.keys(ethClient.actions || {}),
+      transaction: Object.keys(ethClient.actions?.transaction || {}),
+      dispute: Object.keys(ethClient.actions?.dispute || {}),
+      evidence: Object.keys(ethClient.actions?.evidence || {})
     });
     
     // Ensure all expected methods exist
-    if (!client.actions || 
-        !client.actions.transaction || 
-        !client.actions.dispute || 
-        !client.actions.evidence ||
-        !client.actions.evidence.submitEvidence) {
-      console.error("Missing expected methods in kleros client:", client);
-      throw new Error("The Kleros client is missing expected methods. Please check console for details.");
+    if (!ethClient.actions || 
+        !ethClient.actions.transaction || 
+        !ethClient.actions.dispute || 
+        !ethClient.actions.evidence ||
+        !ethClient.actions.evidence.submitEvidence) {
+      console.error("Missing expected methods in eth client:", ethClient);
+      throw new Error("The ETH client is missing expected methods. Please check console for details.");
     }
     
-    return client;
+    return { ethClient, tokenClient };
   }
   throw new Error("Ethereum provider not available");
 };

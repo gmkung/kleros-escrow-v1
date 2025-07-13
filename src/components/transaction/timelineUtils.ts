@@ -29,7 +29,7 @@ export const processTimelineEvents = (transactionEvents: any, transaction: any):
       timelineEvents.push({
         type: 'payment',
         title: "Payment Made",
-        description: `${formatAmount(payment._amount || '0')} paid by ${formatAddress(payment._party)}`,
+        description: `${formatAmount(payment._amount || '0', transaction.tokenInfo?.decimals || 18)} ${transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'ETH'} paid by ${formatAddress(payment._party)}`,
         timestamp: payment.blockTimestamp || Date.now() / 1000 + '',
         transactionHash: payment.transactionHash || '',
       });
@@ -104,7 +104,7 @@ export const processTimelineEvents = (transactionEvents: any, transaction: any):
       timelineEvents.push({
         type: 'final',
         title: "Final Payment",
-        description: `${formatAmount(lastPayment._amount || '0')} transferred to recipient`,
+        description: `${formatAmount(lastPayment._amount || '0', transaction.tokenInfo?.decimals || 18)} ${transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'ETH'} transferred to recipient`,
         timestamp: lastPayment.blockTimestamp || Date.now() / 1000 + '',
         transactionHash: lastPayment.transactionHash || '',
       });

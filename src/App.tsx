@@ -30,7 +30,7 @@ const App = () => (
             <Sonner />
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/transaction/:id" element={<TransactionView />} />
+              <Route path="/transaction/:type/:id" element={<TransactionView />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>

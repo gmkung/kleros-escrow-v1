@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-import { klerosClient, safeLoadIPFS } from '../lib/kleros';
+import { klerosClient, tokenClient, safeLoadIPFS } from '../lib/kleros';
 import { mapTransactionStatus } from '../lib/kleros/utils';
 import { ethers } from 'ethers';
 
@@ -18,7 +18,7 @@ import EvidenceList from './transaction/EvidenceList';
 
 const TransactionDetail = () => {
   const { toast } = useToast();
-  const { id } = useParams<{ id: string }>();
+  const { type, id } = useParams<{ type: string; id: string }>();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,30 +31,58 @@ const TransactionDetail = () => {
     try {
       setLoading(true);
 
-      const allTx = await klerosClient.getAllEthMetaEvidence();
-      const transactionMetaEvidence = allTx.find(tx => tx._metaEvidenceID === id);
+      // Use transaction type from URL to determine which client to use
+      const isTokenTransaction = type?.toLowerCase() === 'token';
+      
+      // Fetch meta evidence from the appropriate client
+      const metaEvidenceList = isTokenTransaction
+        ? await tokenClient.services.tokenEvent.getAllTokenMetaEvidence()
+        : await klerosClient.getAllEthMetaEvidence();
+
+      const transactionMetaEvidence = metaEvidenceList.find(tx => tx._metaEvidenceID === id);
 
       if (!transactionMetaEvidence) {
-        throw new Error('Transaction not found');
+        throw new Error(`${isTokenTransaction ? 'Token' : 'ETH'} transaction not found with ID ${id}`);
       }
 
       const metaData = await safeLoadIPFS(transactionMetaEvidence._evidence);
 
-      // Updated to use direct ETH client methods
-      const transactionDetails = await klerosClient.getEthTransaction(id);
-      const events = await klerosClient.getEthTransactionDetails(id);
+      // Use appropriate client based on transaction type
+      const transactionDetails = isTokenTransaction 
+        ? await tokenClient.getTokenTransaction(id)
+        : await klerosClient.getEthTransaction(id);
+      
+      const events = isTokenTransaction
+        ? await tokenClient.getTokenTransactionDetails(id)
+        : await klerosClient.getEthTransactionDetails(id);
 
-      // Ensure amount is in Wei format
-      let amountInWei;
-      try {
-        // If amount is already in Wei (big number string), use it directly
-        amountInWei = ethers.BigNumber.from(transactionDetails.amount || '0').toString();
-      } catch (e) {
-        // If amount is in ETH format, convert it to Wei
+      // Get token information from metaData
+      let tokenInfo = null;
+      if (metaData.token && metaData.token.address) {
+        tokenInfo = {
+          name: metaData.token.name,
+          symbol: metaData.token.ticker,
+          decimals: parseInt(metaData.token.decimals)
+        };
+      }
+
+      // Handle amount based on transaction type
+      let processedAmount;
+      if (isTokenTransaction) {
+        // For token transactions, amount is already in token's smallest unit
+        processedAmount = transactionDetails.amount || '0';
+      } else {
+        // For ETH transactions, ensure amount is in Wei format
         try {
-          amountInWei = ethers.utils.parseEther(transactionDetails.amount || '0').toString();
+          // If amount is already in Wei (big number string), use it directly
+          processedAmount = ethers.BigNumber.from(transactionDetails.amount || '0').toString();
         } catch (e) {
-          amountInWei = '0';
+          // If amount is in ETH format, convert it to Wei
+          try {
+            processedAmount = ethers.utils.parseEther(transactionDetails.amount || '0').toString();
+          } catch (e) {
+            processedAmount = '0';
+          }
         }
       }
 
@@ -63,13 +91,16 @@ const TransactionDetail = () => {
         timestamp: new Date(parseInt(transactionMetaEvidence.blockTimestamp) * 1000),
         title: metaData.title || 'Untitled Transaction',
         description: metaData.description || 'No description available',
-        amount: amountInWei, // Now always in Wei format
+        amount: processedAmount, // Proper format for transaction type
         category: metaData.category || 'Uncategorized',
         sender: metaData.sender || transactionDetails.sender || 'Unknown',
         receiver: metaData.receiver || transactionDetails.receiver || 'Unknown',
         transactionHash: transactionMetaEvidence.transactionHash,
         blockNumber: transactionMetaEvidence.blockNumber,
-        status: mapTransactionStatus(transactionDetails.status, amountInWei),
+        status: mapTransactionStatus(transactionDetails.status, processedAmount),
+        type: isTokenTransaction ? 'TOKEN' : 'ETH',
+        ...(tokenInfo && { tokenInfo }),
+        ...(metaData.token?.address && { tokenAddress: metaData.token.address }),
         question: metaData.question || '',
         timeout: metaData.timeout || 0,
         rulingOptions: metaData.rulingOptions || { titles: [], descriptions: [] },

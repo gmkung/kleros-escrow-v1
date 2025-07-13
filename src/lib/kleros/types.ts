@@ -103,6 +103,13 @@ export interface ProcessedTransaction {
   transactionHash: string;
   blockNumber: string;
   status?: 'pending' | 'completed' | 'disputed' | 'unknown';
+  type: 'ETH' | 'TOKEN';
+  tokenInfo?: {
+    name: string;
+    symbol: string;
+    decimals: number;
+  };
+  tokenAddress?: string;
 }
 
 export interface CreateTransactionParams {
