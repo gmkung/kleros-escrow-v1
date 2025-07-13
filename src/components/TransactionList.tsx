@@ -14,12 +14,19 @@ const TransactionList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   
-  // Handle search
+  // Handle search and manual overrides
   useEffect(() => {
+    let filtered = transactions;
+    
+    // Manual override: Hide TOKEN transaction 94
+    filtered = filtered.filter(transaction => 
+      !(transaction.type === 'TOKEN' && transaction.id === '47')
+    );
+    
     if (searchTerm.trim() === '') {
-      setFilteredTransactions(transactions);
+      setFilteredTransactions(filtered);
     } else {
-      setFilteredTransactions(searchTransactions(transactions, searchTerm));
+      setFilteredTransactions(searchTransactions(filtered, searchTerm));
     }
     // Reset to first page when search changes
     setCurrentPage(1);
