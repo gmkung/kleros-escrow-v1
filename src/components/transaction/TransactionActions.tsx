@@ -149,7 +149,7 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
         amount: amountWei.toString()
       });
 
-      const tx = await signerClient.actions.transaction.pay({
+      const tx = await signerClient.ethClient.actions.transaction.pay({
         transactionId: transaction.id,
         amount: amountWei.toString(),
       });
@@ -203,7 +203,7 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
         amount: amountWei.toString()
       });
 
-      const tx = await signerClient.actions.transaction.reimburse({
+      const tx = await signerClient.ethClient.actions.transaction.reimburse({
         transactionId: transaction.id,
         amount: amountWei.toString(),
       });
@@ -255,10 +255,10 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
       const signerClient = await createSignerClient();
 
       // Debug: Check what methods are available
-      console.log("Evidence client methods:", signerClient.actions.evidence);
+      console.log("Evidence client methods:", signerClient.ethClient.actions.evidence);
 
       // Submit evidence to blockchain
-      const tx = await signerClient.actions.evidence.submitEvidence({
+      const tx = await signerClient.ethClient.actions.evidence.submitEvidence({
         transactionId: transaction.id,
         evidence: evidenceURI,
       });
@@ -306,7 +306,7 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
         value: arbitrationCost // Keep in Wei
       });
 
-      const tx = await signerClient.actions.dispute.payArbitrationFeeBySender({
+      const tx = await signerClient.ethClient.actions.dispute.payArbitrationFeeBySender({
         transactionId: transaction.id,
         value: arbitrationCost // Keep in Wei
       });
@@ -353,7 +353,7 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
         value: arbitrationCost // Keep in Wei
       });
 
-      const tx = await signerClient.actions.dispute.payArbitrationFeeByReceiver({
+      const tx = await signerClient.ethClient.actions.dispute.payArbitrationFeeByReceiver({
         transactionId: transaction.id,
         value: arbitrationCost // Keep in Wei
       });
