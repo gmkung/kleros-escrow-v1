@@ -33,7 +33,7 @@ const TransactionDetail = () => {
 
       // Use transaction type from URL to determine which client to use
       const isTokenTransaction = type?.toLowerCase() === 'token';
-      
+
       // Fetch meta evidence from the appropriate client
       const metaEvidenceList = isTokenTransaction
         ? await tokenClient.services.tokenEvent.getAllTokenMetaEvidence()
@@ -48,10 +48,10 @@ const TransactionDetail = () => {
       const metaData = await safeLoadIPFS(transactionMetaEvidence._evidence);
 
       // Use appropriate client based on transaction type
-      const transactionDetails = isTokenTransaction 
+      const transactionDetails = isTokenTransaction
         ? await tokenClient.getTokenTransaction(id)
         : await klerosClient.getEthTransaction(id);
-      
+
       const events = isTokenTransaction
         ? await tokenClient.getTokenTransactionDetails(id)
         : await klerosClient.getEthTransactionDetails(id);
@@ -93,8 +93,8 @@ const TransactionDetail = () => {
         description: metaData.description || 'No description available',
         amount: processedAmount, // Proper format for transaction type
         category: metaData.category || 'Uncategorized',
-        sender: metaData.sender || transactionDetails.sender || 'Unknown',
-        receiver: metaData.receiver || transactionDetails.receiver || 'Unknown',
+        sender: transactionDetails.sender || 'Unknown',
+        receiver: transactionDetails.receiver || 'Unknown',
         transactionHash: transactionMetaEvidence.transactionHash,
         blockNumber: transactionMetaEvidence.blockNumber,
         status: mapTransactionStatus(transactionDetails.status, processedAmount),
