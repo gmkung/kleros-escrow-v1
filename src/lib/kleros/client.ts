@@ -48,7 +48,14 @@ export const createSignerClient = async () => {
       evidence: Object.keys(ethClient.actions?.evidence || {})
     });
     
-    // Ensure all expected methods exist
+    console.log("Token Client structure:", {
+      actions: Object.keys(tokenClient.actions || {}),
+      transaction: Object.keys(tokenClient.actions?.transaction || {}),
+      dispute: Object.keys(tokenClient.actions?.dispute || {}),
+      evidence: Object.keys(tokenClient.actions?.evidence || {})
+    });
+    
+    // Ensure all expected methods exist for both clients
     if (!ethClient.actions || 
         !ethClient.actions.transaction || 
         !ethClient.actions.dispute || 
@@ -56,6 +63,15 @@ export const createSignerClient = async () => {
         !ethClient.actions.evidence.submitEvidence) {
       console.error("Missing expected methods in eth client:", ethClient);
       throw new Error("The ETH client is missing expected methods. Please check console for details.");
+    }
+    
+    if (!tokenClient.actions || 
+        !tokenClient.actions.transaction || 
+        !tokenClient.actions.dispute || 
+        !tokenClient.actions.evidence ||
+        !tokenClient.actions.evidence.submitEvidence) {
+      console.error("Missing expected methods in token client:", tokenClient);
+      throw new Error("The Token client is missing expected methods. Please check console for details.");
     }
     
     return { ethClient, tokenClient };

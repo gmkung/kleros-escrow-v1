@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { createSignerClient, klerosClient, uploadEvidenceToIPFS } from '../../lib/kleros';
+import { formatAmount } from '../../lib/kleros/utils';
 import { useToast } from "@/hooks/use-toast";
 import EvidenceDialog, { EvidenceFormData } from './EvidenceDialog';
 import { useAccount, useConnect } from 'wagmi';
@@ -119,7 +120,9 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
   const validateAmount = (value: string): boolean => {
     if (!value || isNaN(Number(value))) return false;
     try {
-      const amountWei = ethers.utils.parseEther(value);
+      // Use correct decimals based on transaction type
+      const decimals = transaction.type === 'TOKEN' ? (transaction.tokenInfo?.decimals || 18) : 18;
+      const amountWei = ethers.utils.parseUnits(value, decimals);
       const transactionAmountWei = ethers.BigNumber.from(transaction.amount);
       return amountWei.gt(0) && amountWei.lte(transactionAmountWei);
     } catch (e) {
@@ -135,8 +138,9 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
       setIsLoading('release');
       const signerClient = await createSignerClient();
 
-      // Convert ETH amount to Wei
-      const amountWei = ethers.utils.parseEther(releaseAmount);
+      // Convert amount to proper units based on transaction type
+      const decimals = transaction.type === 'TOKEN' ? (transaction.tokenInfo?.decimals || 18) : 18;
+      const amountWei = ethers.utils.parseUnits(releaseAmount, decimals);
       const transactionAmountWei = ethers.BigNumber.from(transaction.amount);
       
       // Double check the amount
@@ -149,7 +153,9 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
         amount: amountWei.toString()
       });
 
-      const tx = await signerClient.ethClient.actions.transaction.pay({
+      // Use correct client based on transaction type
+      const client = transaction.type === 'TOKEN' ? signerClient.tokenClient : signerClient.ethClient;
+      const tx = await client.actions.transaction.pay({
         transactionId: transaction.id,
         amount: amountWei.toString(),
       });
@@ -189,8 +195,9 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
       setIsLoading('reimburse');
       const signerClient = await createSignerClient();
 
-      // Convert ETH amount to Wei
-      const amountWei = ethers.utils.parseEther(reimburseAmount);
+      // Convert amount to proper units based on transaction type
+      const decimals = transaction.type === 'TOKEN' ? (transaction.tokenInfo?.decimals || 18) : 18;
+      const amountWei = ethers.utils.parseUnits(reimburseAmount, decimals);
       const transactionAmountWei = ethers.BigNumber.from(transaction.amount);
       
       // Double check the amount
@@ -203,7 +210,9 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
         amount: amountWei.toString()
       });
 
-      const tx = await signerClient.ethClient.actions.transaction.reimburse({
+      // Use correct client based on transaction type
+      const client = transaction.type === 'TOKEN' ? signerClient.tokenClient : signerClient.ethClient;
+      const tx = await client.actions.transaction.reimburse({
         transactionId: transaction.id,
         amount: amountWei.toString(),
       });
@@ -487,7 +496,7 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
                       />
                     </div>
                     <p className="text-sm text-violet-300/70">
-                      Available: Ξ {ethers.utils.formatEther(transaction.amount)}
+                      Available: {transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'Ξ'} {formatAmount(transaction.amount, transaction.tokenInfo?.decimals || 18)}
                     </p>
                   </div>
                   <ActionButton
@@ -521,7 +530,7 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
                       />
                     </div>
                     <p className="text-sm text-violet-300/70">
-                      Available: Ξ {ethers.utils.formatEther(transaction.amount)}
+                      Available: {transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'Ξ'} {formatAmount(transaction.amount, transaction.tokenInfo?.decimals || 18)}
                     </p>
                   </div>
                   <ActionButton
