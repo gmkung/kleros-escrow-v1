@@ -169,7 +169,7 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
 
       toast({
         title: "Funds Released",
-        description: `Successfully released ${releaseAmount} ETH to the receiver`,
+        description: `Successfully released ${releaseAmount} ${transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'ETH'} to the receiver`,
         variant: "default",
       });
 
@@ -226,7 +226,7 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
 
       toast({
         title: "Funds Reimbursed",
-        description: `Successfully reimbursed ${reimburseAmount} ETH to the sender`,
+        description: `Successfully reimbursed ${reimburseAmount} ${transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'ETH'} to the sender`,
         variant: "default",
       });
 
@@ -263,11 +263,14 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
       // Get signer client
       const signerClient = await createSignerClient();
 
+      // Use correct client based on transaction type
+      const client = transaction.type === 'TOKEN' ? signerClient.tokenClient : signerClient.ethClient;
+      
       // Debug: Check what methods are available
-      console.log("Evidence client methods:", signerClient.ethClient.actions.evidence);
+      console.log("Evidence client methods:", client.actions.evidence);
 
       // Submit evidence to blockchain
-      const tx = await signerClient.ethClient.actions.evidence.submitEvidence({
+      const tx = await client.actions.evidence.submitEvidence({
         transactionId: transaction.id,
         evidence: evidenceURI,
       });
@@ -315,7 +318,10 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
         value: arbitrationCost // Keep in Wei
       });
 
-      const tx = await signerClient.ethClient.actions.dispute.payArbitrationFeeBySender({
+      // Use correct client based on transaction type
+      const client = transaction.type === 'TOKEN' ? signerClient.tokenClient : signerClient.ethClient;
+      
+      const tx = await client.actions.dispute.payArbitrationFeeBySender({
         transactionId: transaction.id,
         value: arbitrationCost // Keep in Wei
       });
@@ -362,7 +368,10 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
         value: arbitrationCost // Keep in Wei
       });
 
-      const tx = await signerClient.ethClient.actions.dispute.payArbitrationFeeByReceiver({
+      // Use correct client based on transaction type
+      const client = transaction.type === 'TOKEN' ? signerClient.tokenClient : signerClient.ethClient;
+      
+      const tx = await client.actions.dispute.payArbitrationFeeByReceiver({
         transactionId: transaction.id,
         value: arbitrationCost // Keep in Wei
       });
@@ -477,9 +486,9 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
               <>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="releaseAmount">Amount to Release (ETH)</Label>
+                    <Label htmlFor="releaseAmount">Amount to Release ({transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'ETH'})</Label>
                     <div className="relative">
-                      <span className="absolute left-3 top-2.5 text-violet-300/70">Ξ</span>
+                      <span className="absolute left-3 top-2.5 text-violet-300/70">{transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'Ξ'}</span>
                       <Input
                         id="releaseAmount"
                         type="string"
@@ -511,9 +520,9 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="reimburseAmount">Amount to Reimburse (ETH)</Label>
+                    <Label htmlFor="reimburseAmount">Amount to Reimburse ({transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'ETH'})</Label>
                     <div className="relative">
-                      <span className="absolute left-3 top-2.5 text-violet-300/70">Ξ</span>
+                      <span className="absolute left-3 top-2.5 text-violet-300/70">{transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'Ξ'}</span>
                       <Input
                         id="reimburseAmount"
                         type="string"
@@ -551,7 +560,7 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
                 {isSender && (
                   <div className="space-y-2">
                     <p className="text-sm text-violet-300/70">
-                      Arbitration Fee: Ξ {arbitrationCost ? ethers.utils.formatEther(arbitrationCost) : 'Loading...'}
+                      Arbitration Fee: {transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'Ξ'} {arbitrationCost ? ethers.utils.formatEther(arbitrationCost) : 'Loading...'}
                     </p>
                     <ActionButton
                       onClick={handlePayArbitrationFeeSender}
@@ -568,7 +577,7 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
                 {isReceiver && (
                   <div className="space-y-2">
                     <p className="text-sm text-violet-300/70">
-                      Arbitration Fee: Ξ {arbitrationCost ? ethers.utils.formatEther(arbitrationCost) : 'Loading...'}
+                      Arbitration Fee: {transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'Ξ'} {arbitrationCost ? ethers.utils.formatEther(arbitrationCost) : 'Loading...'}
                     </p>
                     <ActionButton
                       onClick={handlePayArbitrationFeeReceiver}
