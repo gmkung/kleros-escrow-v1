@@ -28,56 +28,44 @@ const ETHEREUM_TOKENS: Token[] = [
     decimals: 18,
     logoURI: "/static/media/eth.33901ab6.png", // Keep original symbolURI for backward compatibility
     chainId: 1,
-    isNative: true
+    isNative: true,
   },
   {
     name: "USD Coin",
     symbol: "USDC",
-    address: "0xA0b86a33E6441c8E7a0F4f5b48e3E5B22d8C6F0c",
+    address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
     decimals: 6,
-    logoURI: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86a33E6441c8E7a0F4f5b48e3E5B22d8C6F0c/logo.png",
-    chainId: 1
+    logoURI:
+      "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+    chainId: 1,
   },
   {
     name: "Dai Stablecoin",
     symbol: "DAI",
     address: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
     decimals: 18,
-    logoURI: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
-    chainId: 1
+    logoURI:
+      "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x6B175474E89094C44Da98b954EedeAC495271d0F/logo.png",
+    chainId: 1,
   },
   {
     name: "Tether USD",
     symbol: "USDT",
     address: "0xdAC17F958D2ee523a2206206994597C13D831ec7", // Correct checksum case
     decimals: 6,
-    logoURI: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
-    chainId: 1
-  },
-  {
-    name: "Wrapped Bitcoin",
-    symbol: "WBTC",
-    address: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
-    decimals: 8,
-    logoURI: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png",
-    chainId: 1
-  },
-  {
-    name: "Wrapped Ether",
-    symbol: "WETH",
-    address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-    decimals: 18,
-    logoURI: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
-    chainId: 1
+    logoURI:
+      "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
+    chainId: 1,
   },
   {
     name: "Pinakion",
     symbol: "PNK",
     address: "0x93ED3FBe21207Ec2E8f2d3c3de6e058Cb73Bc04d",
     decimals: 18,
-    logoURI: "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x93ED3FBe21207Ec2E8f2d3c3de6e058Cb73Bc04d/logo.png",
-    chainId: 1
-  }
+    logoURI:
+      "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x93ED3FBe21207Ec2E8f2d3c3de6e058Cb73Bc04d/logo.png",
+    chainId: 1,
+  },
 ];
 
 // Token service class with extensible architecture
@@ -89,9 +77,11 @@ export class TokenService {
     this.tokenList = {
       name: "Kleros Escrow Token List",
       version: { major: 1, minor: 0, patch: 0 },
-      tokens: ETHEREUM_TOKENS
+      tokens: ETHEREUM_TOKENS,
     };
-    this.tokenMap = new Map(ETHEREUM_TOKENS.map(token => [token.address.toLowerCase(), token]));
+    this.tokenMap = new Map(
+      ETHEREUM_TOKENS.map((token) => [token.address.toLowerCase(), token])
+    );
   }
 
   // Get all allowed tokens
@@ -106,7 +96,9 @@ export class TokenService {
 
   // Get token by symbol
   getTokenBySymbol(symbol: string): Token | undefined {
-    return this.tokenList.tokens.find(token => token.symbol.toLowerCase() === symbol.toLowerCase());
+    return this.tokenList.tokens.find(
+      (token) => token.symbol.toLowerCase() === symbol.toLowerCase()
+    );
   }
 
   // Check if token is allowed
@@ -116,12 +108,15 @@ export class TokenService {
 
   // Get default token (ETH)
   getDefaultToken(): Token {
-    return this.tokenList.tokens.find(token => token.isNative) || this.tokenList.tokens[0];
+    return (
+      this.tokenList.tokens.find((token) => token.isNative) ||
+      this.tokenList.tokens[0]
+    );
   }
 
   // Format token amount for display
   formatTokenAmount(amount: string | number, token: Token): string {
-    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
     return `${numAmount.toFixed(token.decimals <= 6 ? 2 : 4)} ${token.symbol}`;
   }
 
@@ -129,7 +124,7 @@ export class TokenService {
   parseTokenAmount(amount: string, token: Token): string {
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount)) throw new Error("Invalid amount");
-    
+
     // Convert to smallest unit
     const multiplier = Math.pow(10, token.decimals);
     return Math.floor(numAmount * multiplier).toString();
@@ -139,7 +134,7 @@ export class TokenService {
   formatFromSmallestUnit(amount: string, token: Token): string {
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount)) return "0";
-    
+
     const divider = Math.pow(10, token.decimals);
     return (numAmount / divider).toString();
   }
@@ -149,19 +144,20 @@ export class TokenService {
     try {
       const response = await fetch(url);
       const externalList: TokenList = await response.json();
-      
+
       // Validate and merge tokens
-      const validTokens = externalList.tokens.filter(token => 
-        token.address && token.symbol && token.name && token.decimals >= 0
+      const validTokens = externalList.tokens.filter(
+        (token) =>
+          token.address && token.symbol && token.name && token.decimals >= 0
       );
-      
+
       // Add new tokens to the existing list
-      const newTokens = validTokens.filter(token => 
-        !this.tokenMap.has(token.address.toLowerCase())
+      const newTokens = validTokens.filter(
+        (token) => !this.tokenMap.has(token.address.toLowerCase())
       );
-      
+
       this.tokenList.tokens.push(...newTokens);
-      newTokens.forEach(token => {
+      newTokens.forEach((token) => {
         this.tokenMap.set(token.address.toLowerCase(), token);
       });
     } catch (error) {
@@ -183,7 +179,7 @@ export class TokenService {
       ticker: token.symbol,
       address: token.isNative ? null : token.address,
       decimals: token.decimals,
-      symbolURI: token.logoURI
+      symbolURI: token.logoURI,
     };
   }
 }
@@ -192,4 +188,4 @@ export class TokenService {
 export const tokenService = new TokenService();
 
 // Export default token list for backwards compatibility
-export { ETHEREUM_TOKENS as defaultTokens }; 
+export { ETHEREUM_TOKENS as defaultTokens };
