@@ -192,7 +192,7 @@ export const CONTRACT_ADDRESSES = {
   // ETH-based transactions
   MULTIPLE_ARBITRABLE_TRANSACTION: "0x0d67440946949fe293b45c52efd8a9b3d51e2522",
   
-  // ERC20 token-based transactions (this would need to be deployed or use existing address)
+  // ERC20 token-based transactions
   MULTIPLE_ARBITRABLE_TRANSACTION_TOKENS: "0xBCf0d1AD453728F75e9cFD4358ED187598A45e6c"
 };
 

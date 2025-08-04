@@ -488,7 +488,6 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
                   <div className="space-y-2">
                     <Label htmlFor="releaseAmount">Amount to Release ({transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'ETH'})</Label>
                     <div className="relative">
-                      <span className="absolute left-3 top-2.5 text-violet-300/70">{transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'Ξ'}</span>
                       <Input
                         id="releaseAmount"
                         type="string"
@@ -500,9 +499,10 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
                             setReleaseAmount(value);
                           }
                         }}
-                        className="pl-8"
+                        className="pr-16"
                         placeholder="0.00"
                       />
+                      <span className="absolute right-3 top-2.5 text-violet-300/70">{transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'Ξ'}</span>
                     </div>
                     <p className="text-sm text-violet-300/70">
                       Available: {transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'Ξ'} {formatAmount(transaction.amount, transaction.tokenInfo?.decimals || 18)}
@@ -522,7 +522,6 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
                   <div className="space-y-2">
                     <Label htmlFor="reimburseAmount">Amount to Reimburse ({transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'ETH'})</Label>
                     <div className="relative">
-                      <span className="absolute left-3 top-2.5 text-violet-300/70">{transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'Ξ'}</span>
                       <Input
                         id="reimburseAmount"
                         type="string"
@@ -534,9 +533,10 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
                             setReimburseAmount(value);
                           }
                         }}
-                        className="pl-8"
+                        className="pr-16"
                         placeholder="0.00"
                       />
+                      <span className="absolute right-3 top-2.5 text-violet-300/70">{transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'Ξ'}</span>
                     </div>
                     <p className="text-sm text-violet-300/70">
                       Available: {transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'Ξ'} {formatAmount(transaction.amount, transaction.tokenInfo?.decimals || 18)}
@@ -560,7 +560,7 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
                 {isSender && (
                   <div className="space-y-2">
                     <p className="text-sm text-violet-300/70">
-                      Arbitration Fee: {transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'Ξ'} {arbitrationCost ? ethers.utils.formatEther(arbitrationCost) : 'Loading...'}
+                      Arbitration Fee: Ξ {arbitrationCost ? ethers.utils.formatEther(arbitrationCost) : 'Loading...'}
                     </p>
                     <ActionButton
                       onClick={handlePayArbitrationFeeSender}
@@ -577,7 +577,7 @@ const TransactionActions = ({ transaction, transactionEvents, onAction }: Transa
                 {isReceiver && (
                   <div className="space-y-2">
                     <p className="text-sm text-violet-300/70">
-                      Arbitration Fee: {transaction.type === 'TOKEN' ? transaction.tokenInfo?.symbol : 'Ξ'} {arbitrationCost ? ethers.utils.formatEther(arbitrationCost) : 'Loading...'}
+                      Arbitration Fee: Ξ {arbitrationCost ? ethers.utils.formatEther(arbitrationCost) : 'Loading...'}
                     </p>
                     <ActionButton
                       onClick={handlePayArbitrationFeeReceiver}

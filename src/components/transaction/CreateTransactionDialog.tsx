@@ -305,22 +305,17 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
         const receipt = await tx.wait();
         console.log("Transaction confirmed:", receipt);
         
-        // Extract transaction ID from events
-        const transactionCreatedEvent = receipt.events?.find(
-          (event: any) => event.event === 'TransactionCreated'
-        );
-        
-        const transactionId = transactionCreatedEvent?.args?._transactionID?.toString();
-        
-        if (!transactionId) {
-          console.log("All events:", receipt.events);
-          throw new Error("Failed to extract transaction ID from events");
-        }
-        
         result = {
-          transactionId: transactionId,
+          transactionId: "created", // Placeholder since we don't need the actual ID
           transactionHash: receipt.transactionHash
         };
+        
+        // Show success toast
+        toast({
+          title: "Transaction Created Successfully!",
+          description: `Your ${token.isNative ? 'ETH' : 'ERC20'} escrow transaction has been created. You will be redirected to the main page.`,
+          variant: "default",
+        });
       }
 
       toast({
@@ -332,9 +327,8 @@ const CreateTransactionDialog = ({ isOpen, onClose }: CreateTransactionDialogPro
       setSelectedToken(tokenService.getDefaultToken());
       onClose();
       
-      // Navigate to the appropriate transaction type URL
-      const transactionType = token.isNative ? 'eth' : 'token';
-      navigate(`/transaction/${transactionType}/${result.transactionId}`);
+      // Navigate back to the main page after successful transaction creation
+      navigate('/');
     } catch (error: any) {
       console.error("Error creating transaction:", error);
       toast({
