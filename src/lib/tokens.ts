@@ -125,9 +125,12 @@ export class TokenService {
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount)) throw new Error("Invalid amount");
 
-    // Convert to smallest unit
-    const multiplier = Math.pow(10, token.decimals);
-    return Math.floor(numAmount * multiplier).toString();
+    // Use BigInt for all cases to avoid scientific notation and ensure precision
+    const [integerPart, decimalPart = ""] = amount.toString().split(".");
+    const paddedDecimal = decimalPart
+      .padEnd(token.decimals, "0")
+      .slice(0, token.decimals);
+    return BigInt(integerPart + paddedDecimal).toString();
   }
 
   // Format token amount from smallest unit
