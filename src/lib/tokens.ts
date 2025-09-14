@@ -135,11 +135,30 @@ export class TokenService {
 
   // Format token amount from smallest unit
   formatFromSmallestUnit(amount: string, token: Token): string {
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount)) return "0";
+    try {
+      // Use BigInt to avoid scientific notation for large numbers
+      const amountBigInt = BigInt(amount);
+      const divisor = BigInt(Math.pow(10, token.decimals));
 
-    const divider = Math.pow(10, token.decimals);
-    return (numAmount / divider).toString();
+      // Calculate integer and decimal parts
+      const integerPart = amountBigInt / divisor;
+      const decimalPart = amountBigInt % divisor;
+
+      // Convert decimal part to string with proper padding
+      const decimalStr = decimalPart.toString().padStart(token.decimals, "0");
+
+      // Remove trailing zeros from decimal part
+      const trimmedDecimal = decimalStr.replace(/0+$/, "");
+
+      if (trimmedDecimal === "") {
+        return integerPart.toString();
+      } else {
+        return `${integerPart.toString()}.${trimmedDecimal}`;
+      }
+    } catch (error) {
+      console.warn("Error formatting from smallest unit:", error);
+      return "0";
+    }
   }
 
   // Future extensibility: Load external token list
